@@ -196,9 +196,10 @@ class sync_up_enrolments_service extends service {
         global $CFG;
 
         $result = ["url" => null, "url_sala_coordenacao" => null, "ids_suspensos" => []];
+        $sincrono = getattr($this->json, 'sincrono', false);
 
         $this->sync_categories();
-        if ($inBackground || $this->json->sincrono) {
+        if ($inBackground || $sincrono) {
             $this->sync_users();
             $this->sync_cohorts();
         }
@@ -208,7 +209,7 @@ class sync_up_enrolments_service extends service {
             $this->isRoom = $isRoom;
             $this->sync_course($isRoom ? $this->cursoCategory->id : $this->turmaCategory->id);
             $result[$isRoom ? 'url_sala_coordenacao' : 'url'] = "$prefix?id={$this->course->id}";
-            if ($inBackground || $this->json->sincrono) {
+            if ($inBackground || $sincrono) {
                 $this->sync_enrols_cohorts();
                 $this->sync_enrols_manuals();
                 $this->sync_enrolments();
