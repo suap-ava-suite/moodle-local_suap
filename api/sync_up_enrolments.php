@@ -471,7 +471,7 @@ class sync_up_enrolments_service extends service {
             /* Obrigatório - Painel AVA */
             "customfield_sala_tipo" => $this->get_sala_tipo(),
             "customfield_turma_autoinscricao" => $this->isRoom ? '' : (getattr($this->json->turma, 'autoinscricao') == 'true' ? '1' : '0'),
-            "customfield_restricoes_de_autoinscricao" => json_encode(getattr($this->json->turma, 'restricoes', [])),
+            "customfield_restricoes_de_autoinscricao" => getattr($this->json->turma, 'restricoes', []),
 
             /* Obrigatórios - Campus */
             "customfield_campus_id" => $this->json->campus->id,
