@@ -13,7 +13,8 @@
 
 namespace local_suap;
 
-require_once('../locallib.php');
+global $CFG;
+require_once($CFG->dirroot . '/local/suap/locallib.php');
 
 class service {
 

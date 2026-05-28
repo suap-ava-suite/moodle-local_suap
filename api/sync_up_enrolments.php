@@ -8,6 +8,7 @@ if (!defined('NO_MOODLE_COOKIES')) {
 
 require_once(\dirname(\dirname(\dirname(__DIR__))) . '/config.php');
 
+global $CFG;
 require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->dirroot . '/user/lib.php');
 require_once($CFG->dirroot . '/cohort/lib.php');
@@ -28,7 +29,7 @@ function getattr($obj, $prop, $default = '') {
 
 class sync_up_enrolments_service extends service {
 
-    private $json;
+    public $json;
     private $result = [];
     private $cursoCategory;
     private $turmaCategory;
@@ -48,6 +49,7 @@ class sync_up_enrolments_service extends service {
     private $auths_mapping;
     private $alunos_sincronizados = [];
     private $ids_suspensos = [];
+    private $inBackground = False;
 
 
     function get_course_enrol_instance_by_enrol_type($enrol_type) {
@@ -183,20 +185,22 @@ class sync_up_enrolments_service extends service {
         $jsonstring = file_get_contents('php://input');
 
         $this->validate_json($jsonstring);
-        $result = $this->process($jsonstring, false);
-        $DB->insert_record(
+        $result = $this->process(false);
+        $id = $DB->insert_record(
             "suap_enrolment_to_sync",
             (object)['json' => $jsonstring, 'timecreated' => time(), 'processed' => 0]
         );
+        $result['sincronizacao_id'] = $id;
         return $result;
     }
 
 
-    function process($jsonstring, $inBackground) {
+    function process($inBackground) {
         global $CFG;
 
         $result = ["url" => null, "url_sala_coordenacao" => null, "ids_suspensos" => []];
         $sincrono = getattr($this->json, 'sincrono', false);
+        $this->inBackground = $inBackground;
 
         $this->sync_categories();
         if ($inBackground || $sincrono) {
@@ -207,6 +211,7 @@ class sync_up_enrolments_service extends service {
         $prefix = "{$CFG->wwwroot}/course/view.php";
         foreach ([false, true] as $isRoom) {
             $this->isRoom = $isRoom;
+            $this->sync_log("Vou processar " . ($isRoom ? "sala de coordenação" : "diário") . ". ", 0);
             $this->sync_course($isRoom ? $this->cursoCategory->id : $this->turmaCategory->id);
             $result[$isRoom ? 'url_sala_coordenacao' : 'url'] = "$prefix?id={$this->course->id}";
             if ($inBackground || $sincrono) {
@@ -215,52 +220,56 @@ class sync_up_enrolments_service extends service {
                 $this->sync_enrolments();
                 $this->suspend_students_not_in_list_all_enrols();
                 $this->sync_groups();
-
             }
         }
         $result["ids_suspensos"] = array_unique($this->ids_suspensos);
+        
 
         return $result;
     }
 
 
+    function sync_category($idnumber, $name, $parent) {
+        global $DB;
+        $category = $DB->get_record('course_categories', ['idnumber' => $idnumber]);
+        if (empty($category)) {
+            $category = \core_course_category::create(['name' => $name, 'idnumber' => $idnumber, 'parent' => $parent]);
+        }
+
+        $this->sync_log("Categoria " . $idnumber . " sincronizada. ", 0);
+
+        return $category;
+    }
+
     function sync_categories() {
-        function sync_category($idnumber, $name, $parent) {
-            global $DB;
 
-            $category = $DB->get_record('course_categories', ['idnumber' => $idnumber]);
-            if (empty($category)) {
-                $category = \core_course_category::create(['name' => $name, 'idnumber' => $idnumber, 'parent' => $parent]);
-            }
+        $ano_periodo = substr($this->json->turma->codigo, 0, 4) . "." . substr($this->json->turma->codigo, 4, 1);
 
-            return $category;
-        }        
-        $diarioCategory = sync_category(
+        $diarioCategory = $this->sync_category(
             config('top_category_idnumber') ?: 'diarios',
             config('top_category_name') ?: 'Diários',
             config('top_category_parent') ?: 0
         );
 
-        $campusCategory = sync_category(
+        $campusCategory = $this->sync_category(
             $this->json->campus->sigla,
             $this->json->campus->descricao,
             $diarioCategory->id
         );
 
-        $this->cursoCategory = sync_category(
+        $this->cursoCategory = $this->sync_category(
             $this->json->curso->codigo,
             $this->json->curso->nome,
             $campusCategory->id
         );
 
-        $ano_periodo = substr($this->json->turma->codigo, 0, 4) . "." . substr($this->json->turma->codigo, 4, 1);
-        $semestreCategory = sync_category(
+        $semestreCategory = $this->sync_category(
             "{$this->json->curso->codigo}.{$ano_periodo}",
             $ano_periodo,
             $this->cursoCategory->id
         );
 
-        $this->turmaCategory = sync_category(
+        $this->turmaCategory = $this->sync_category(
             $this->json->turma->codigo,
             $this->json->turma->codigo,
             $semestreCategory->id
@@ -300,7 +309,8 @@ class sync_up_enrolments_service extends service {
             $aluno->tipo_usuario = $aluno->tipo_usuario ?: "Aluno";
         }
 
-        foreach (array_merge($time, $alunos) as $usuario) {
+        $usuarios = array_merge($time, $alunos);
+        foreach ($usuarios as $usuario) {
             $this->sync_user($usuario);
             $this->sync_profile_custom_fields($usuario);
         }
@@ -321,6 +331,7 @@ class sync_up_enrolments_service extends service {
             'confirmed' => 1,
             'mnethostid' => 1,
             'suspended' => 0,
+            'lang' => '',
         ];
         $insert_or_update = [
             'firstname' => implode(' ', array_slice($nome_parts, 0, -1)),
@@ -339,6 +350,8 @@ class sync_up_enrolments_service extends service {
                 \set_user_preference($parts[0], $parts[1], $usuario->user);
             }
         }
+        $this->sync_log("Usuário " . $usuario->username . " sincronizado. ", 0);
+
     }
 
 
@@ -364,9 +377,11 @@ class sync_up_enrolments_service extends service {
                     $cohort->visible = $coorte->ativo;
                     \cohort_update_cohort($cohort);
                 }
+                $this->sync_log("Coorte" . $cohort->name . " sincronizada. ", 0);
 
                 foreach ($coorte->colaboradores as $usuario) {
                     \cohort_add_member($cohort->id, $usuario->user->id);
+                    $this->sync_log("Usuário " . $usuario->user->username . " sincronizado na coorte " . $cohort->name . ". ", 0);
                 }
                 $coorte->cohort = $cohort;
             }
@@ -471,7 +486,7 @@ class sync_up_enrolments_service extends service {
             /* Obrigatório - Painel AVA */
             "customfield_sala_tipo" => $this->get_sala_tipo(),
             "customfield_turma_autoinscricao" => $this->isRoom ? '' : (getattr($this->json->turma, 'autoinscricao') == 'true' ? '1' : '0'),
-            "customfield_restricoes_de_autoinscricao" => getattr($this->json->turma, 'restricoes', []),
+            "customfield_restricoes_de_autoinscricao" => getattr($this->json->turma, 'restricoes', ''),
 
             /* Obrigatórios - Campus */
             "customfield_campus_id" => $this->json->campus->id,
@@ -550,6 +565,8 @@ class sync_up_enrolments_service extends service {
             update_course($this->course);
         }
 
+        $this->sync_log("Curso " . $this->course->shortname . " sincronizado. ", 0);
+
         $this->context = \context_course::instance($this->course->id);
     }
 
@@ -560,13 +577,19 @@ class sync_up_enrolments_service extends service {
         $enrol_plugin = enrol_get_plugin("cohort");
         foreach (getattr($this->json, 'coortes', []) as $coorte) {
             if (!$cohort = $DB->get_record('cohort', ['idnumber' => $coorte->idnumber])) {
-                throw new \Exception("Não localizei a coorte '{$coorte->nome}' ( / {$coorte->idnumber}) ", 555);
+                $this->sync_log("Não localizei a coorte '{$coorte->nome}' ( / {$coorte->idnumber})", 555);
+                continue;
             }
-            if (!$role = $DB->get_record('role', ['shortname' => $coorte->role])) {
-                throw new \Exception("Não localizei a role({$coorte->role})", 555);
+            $coorte_role = strtolower($coorte->role);
+            if (!$role = $DB->get_record('role', ['shortname' => $coorte_role])) {
+                $this->sync_log("Não localizei a role({$coorte_role})", 555);
+                continue;
             }
             if (!$instance = $DB->get_record('enrol', ["enrol" => "cohort", "customint1" => $cohort->id, "courseid" => $this->course->id])) {
                 $enrol_plugin->add_instance($this->course, ["customint1" => $cohort->id, "roleid" => $role->id, "customint2" => 0]);
+                $this->sync_log("Coorte '{$coorte->nome}' ( / {$coorte->idnumber}): adicionada ao curso. ", 0);
+            } else {
+                $this->sync_log("Coorte '{$coorte->nome}' ( / {$coorte->idnumber}): já existe instância de enrolamento. ", 0);
             }
         }
     }
@@ -593,31 +616,60 @@ class sync_up_enrolments_service extends service {
             $sala_tipo = $keys["sala_tipo"];
             $papel_suap = $keys["papel_suap"];
             if (!isset($mappings->$sala_tipo) || !isset($mappings->$sala_tipo->$papel_suap)) {
-                throw new \Exception("Nas salas do tipo '{$sala_tipo}' não existe mapeamento para o papel '{$papel_suap}'.", 551);
+                $this->sync_log(
+                    "Nas salas do tipo '{$sala_tipo}' não existe mapeamento para o papel '{$papel_suap}'.",
+                    551
+                );
+                continue;
             }
             $m = $mappings->$sala_tipo->$papel_suap;
 
             if (!isset($m->role_instance)) {
                 if (!$role_instance = $DB->get_record('role', ['shortname' => $m->role])) {
-                    throw new \Exception("Não localizei a role({$m->role}) nas salas do tipo '{$sala_tipo}', papel '{$papel_suap}'.", 552);
+                    $this->sync_log(
+                        "Não localizei a role({$m->role}) nas salas do tipo '{$sala_tipo}', papel '{$papel_suap}'.",
+                        552
+                    );
+                    continue;
                 }
                 $m->role_instance = $role_instance;
             }
 
             if (!isset($m->enrol_plugin)) {
                 if (!$enrol_plugin = enrol_get_plugin($m->enrol)) {
-                    throw new \Exception("Não localizei a enrol({$m->enrol}) nas salas do tipo '{$sala_tipo}', papel '{$papel_suap}'.", 553);
+                    $this->sync_log(
+                        "Não localizei a enrol({$m->enrol}) nas salas do tipo '{$sala_tipo}', papel '{$papel_suap}'.",
+                        553
+                    );
+                    continue;
                 }
                 $m->enrol_plugin = $enrol_plugin;
             }
             if (!isset($m->enrol_instance)) {
                 if (!$enrol_instance = $this->get_course_enrol_instance_by_enrol_type($m->enrol)) {
-                    throw new \Exception("Não consegui criar/recurperar a instância do enrol ({$m->enrol}) no curso '{$this->json->course->id}'.", 554);
+                    $this->sync_log(
+                        "Não consegui criar/recurperar a instância do enrol ({$m->enrol}) no curso '{$this->json->course->id}'.",
+                        554
+                    );
+                    continue;
                 }
                 $m->enrol_instance = $enrol_instance;
             }
 
             $this->roles_mapping[$prefix] = $m;
+
+            $this->sync_log("Nas salas do tipo '{$sala_tipo}' já existia mapeamento para o papel '{$papel_suap}'. ", 0);
+        }
+    }
+
+
+    private function sync_log(string $message, int $code) {
+        if ($this->inBackground) {
+            echo "\n" . $code . ": " . $message;
+            return;
+        }
+        if ($code != 0) {
+            throw new \Exception($message, $code);
         }
     }
 
@@ -626,24 +678,26 @@ class sync_up_enrolments_service extends service {
         $professores = getattr($this->json, 'professores', []);
         $equipe = getattr($this->json, 'equipe', []);
         $alunos = getattr($this->json, 'alunos', []);
-        $primeiro_aluno_role = null;
         foreach (array_merge($professores, $equipe, $alunos) as $usuario) {
             $prefix = $this->get_sala_tipo() . ":" .  getattr($usuario, 'tipo', 'Aluno');
             $m = $this->roles_mapping[$prefix];
             if (!$m) {
+                $this->sync_log("Não localizei mapeamento para o prefix '{$prefix}'.", 0);
                 continue;
             }
-            if (getattr($usuario, 'tipo', 'Aluno') === 'Aluno' && !$primeiro_aluno_role) {
-                $primeiro_aluno_role = $m->role;
-            }
-
             $status_str = strtolower(getattr($usuario, 'situacao_diario', getattr($usuario, 'status', 'inativo')));
             $status = $status_str === 'ativo' ? \ENROL_USER_ACTIVE : \ENROL_USER_SUSPENDED;
 
             if ($this->is_user_enrolled_in_role($usuario->user, $m->enrol_instance, $m->role_instance)) {
                 $m->enrol_plugin->update_user_enrol($m->enrol_instance, $usuario->user->id, $status);
+                $this->sync_log("Enrolment do usuário {$usuario->user->username} no enroll {$m->enrol}, role {$m->role_instance->shortname}, atualizado para a situação {$status_str}.", 0);
             } else {
-                $m->enrol_plugin->enrol_user($m->enrol_instance, $usuario->user->id, $m->role_instance->id, time(), 0, $status);
+                try {
+                    $m->enrol_plugin->enrol_user($m->enrol_instance, $usuario->user->id, $m->role_instance->id, time(), 0, $status);
+                    $this->sync_log("Enrolment do usuário {$usuario->user->username} no enroll {$m->enrol}, role {$m->role_instance->shortname}, inserido na situação {$status_str}.", 0);
+                } catch (\Throwable $e) {
+                    $this->sync_log("Erro ao matricular usuário {$usuario->user->username}: {$e->getMessage()}", 534);
+                }
             }
             $this->alunos_sincronizados[] = $usuario->user->id;
         }
@@ -706,6 +760,7 @@ class sync_up_enrolments_service extends service {
             );
 
             $this->ids_suspensos[] = $record->userid;
+            $this->sync_log("Enrolment do usuário id {$record->userid} no enroll {$record->enrol} suspenso por não estar mais presente na lista de alunos sincronizados.", 0);
         }
 
         return $this->ids_suspensos;
@@ -767,9 +822,11 @@ class sync_up_enrolments_service extends service {
             foreach ($grupos as $group_name => $alunos) {
                 $group = $this->sync_group($group_name);
                 $idDosAlunosFaltandoAgrupar = $this->getIdDosAlunosFaltandoAgrupar($group, $alunos);
+                $this->sync_log("Grupo '{$group_name}' sincronizado. ", 0);
                 foreach ($alunos as $group_name => $usuario) {
                     if (!in_array($usuario->user->id, $idDosAlunosFaltandoAgrupar)) {
                         \groups_add_member($group->id, $usuario->user->id);
+                        $this->sync_log("Usuário '{$usuario->user->username}' adicionado ao grupo '{$group_name}'. ", 0);
                     }
                 }
             }
@@ -787,6 +844,7 @@ class sync_up_enrolments_service extends service {
         if (!$group && !in_array($group_name, $this->course->synchronized_groups)) {
             $groupid = \groups_create_group((object)$data);
             $group = $DB->get_record('groups', ['id' => $groupid]);
+            $this->sync_log("Criado o grupo '{$group_name}'.", 0);
         }
         return $group;
     }

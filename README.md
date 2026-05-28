@@ -294,6 +294,12 @@ Após realizar o fluxo padrão
 4. Retornar URL do Diário e URL da Sala de Coordenação
 
 
+### Como monitorar o processamento assíncrono
+
+```bash
+ava exec moodle php admin/cli/scheduled_task.php  --showdebugging --execute='\\local_suap\\task\\sync_up_enrolments_task'
+```
+
 ### Sincronização das notas
 
 1. Descrever mais.
