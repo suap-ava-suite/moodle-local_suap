@@ -23,14 +23,14 @@ class sync_up_enrolments_task extends \core\task\scheduled_task {
                 $service = new \local_suap\sync_up_enrolments_service();
                 $service->validate_json($item->json);
                 $service->process(true);
-                // $item->processed = 1; // sucesso
+                $item->processed = 1; // sucesso
                 $DB->update_record('suap_enrolment_to_sync', $item);
                 $elapsed_time = round(microtime(true) - $start_time, 2);
                 echo "\nSolicitação {$item->id} processada com sucesso em {$elapsed_time} segundos.";
             } catch (\Throwable $e) {
                 $elapsed_time = round(microtime(true) - $start_time, 2);
                 echo "\nSolicitação {$item->id} processada com erro (" . $e->getMessage() . ")e m {$elapsed_time} segundos.";
-                // $item->processed = 2; // falha
+                $item->processed = 2; // falha
                 $DB->update_record('suap_enrolment_to_sync', $item);   
             }
         }
