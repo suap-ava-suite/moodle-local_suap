@@ -14,10 +14,13 @@ if (!is_siteadmin()) {
     die();
 }
 
- echo $OUTPUT->header();
-$linha = $DB->get_record("suap_enrolment_to_sync", ['id'=>$_GET['id']]);
+echo $OUTPUT->header();
+$linha = $DB->get_record("suap_enrolment_to_sync", ['id'=>required_param('id', PARAM_INT)]);
 $statuses = [0=>"Não processado", 1=>"Sucesso", 2=>'Falha'];
+$json = json_decode($linha->json ?? "{}");
 $linha->status = $statuses[$linha->processed];
+$linha->solicitacao_url = is_object($json) ? ($json->solicitacao_url ?? null) : null;
+$linha->json = json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 $templatecontext = ['linha' => $linha];
 echo $OUTPUT->render_from_template('local_suap/view', $templatecontext);
 echo $OUTPUT->footer();

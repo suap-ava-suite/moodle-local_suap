@@ -52,6 +52,70 @@ class sync_up_enrolments_service extends service {
     private $inBackground = False;
 
 
+    function do_call() {
+        global $DB, $CFG;
+
+        $jsonstring = file_get_contents('php://input');
+
+        $this->validate_json($jsonstring);
+        $result = $this->process(false);
+        $id = $DB->insert_record(
+            "suap_enrolment_to_sync",
+            (object)['json' => $jsonstring, 'timecreated' => time(), 'processed' => 0]
+        );
+
+        $task = new \local_suap\task\sync_up_enrolments_task();
+        $task->set_custom_data(['id' => $id]);
+        \core\task\manager::queue_adhoc_task($task);
+
+        $result['sincronizacao_url'] = "{$CFG->wwwroot}/local/suap/admin/view.php?id=$id";
+        return $result;
+    }
+
+
+    function validate_json($jsonstring) {
+        global $CFG;
+
+        $this->json = json_decode($jsonstring);
+
+        if (!$this->json) {
+            throw new \Exception("Erro ao decodificar o JSON, favor corrigir.");
+        }
+    }
+
+
+    function process($inBackground) {
+        global $CFG;
+
+        $this->result = ["url" => null, "url_sala_coordenacao" => null, "ids_suspensos" => []];
+        $result = ["url" => null, "url_sala_coordenacao" => null, "ids_suspensos" => []];
+        $sincrono = getattr($this->json, 'sincrono', false);
+        $this->inBackground = $inBackground;
+
+        $this->sync_categories();
+        $this->sync_users();
+        $this->sync_cohorts();
+
+        
+        foreach ([false, true] as $isRoom) {
+            $this->isRoom = $isRoom;
+            $this->sync_log("Vou processar " . ($this->isRoom ? "sala de coordenação" : "diário") . ". ", 0);
+            $this->sync_course($isRoom ? $this->cursoCategory->id : $this->turmaCategory->id);
+            $this->sync_enrols_cohorts();
+            $this->sync_enrols_manuals();
+            $this->sync_enrolments();
+            if ($inBackground || $sincrono) {
+                $this->suspend_students_not_in_list_all_enrols();
+                $this->sync_groups();
+            }
+        }
+        $this->result["ids_suspensos"] = array_unique($this->ids_suspensos);
+        
+
+        return $this->result;
+    }
+
+
     function get_course_enrol_instance_by_enrol_type($enrol_type) {
         global $DB;
         foreach (\enrol_get_instances($this->course->id, FALSE) as $instance) {
@@ -156,79 +220,6 @@ class sync_up_enrolments_service extends service {
     }
 
 
-    function validate_json($jsonstring) {
-        global $CFG;
-
-        $this->json = json_decode($jsonstring);
-
-        if (!$this->json) {
-            throw new \Exception("Erro ao decodificar o JSON, favor corrigir.");
-        }
-
-        // TODO: Verificar a efetividade da validação do JSON
-        // $schema = json_decode(file_get_contents($CFG->dirroot . '/local/suap/schemas/sync_up_enrolments.schema.json'));
-        // $validation = \Jsv4\Validator::validate($this->json, $schema);
-        // if (!\Jsv4\Validator::isValid($this->json, $schema)) {
-        //     $errors = "";
-
-        //     foreach ($validation->errors as $error) {
-        //         $errors .= "{$error->message}";
-        //     }
-        //     throw new \Exception("Erro ao validar o JSON, favor corrigir." . $errors);
-        // }
-    }
-
-
-    function do_call() {
-        global $DB;
-
-        $jsonstring = file_get_contents('php://input');
-
-        $this->validate_json($jsonstring);
-        $result = $this->process(false);
-        $id = $DB->insert_record(
-            "suap_enrolment_to_sync",
-            (object)['json' => $jsonstring, 'timecreated' => time(), 'processed' => 0]
-        );
-        $result['sincronizacao_id'] = $id;
-        return $result;
-    }
-
-
-    function process($inBackground) {
-        global $CFG;
-
-        $result = ["url" => null, "url_sala_coordenacao" => null, "ids_suspensos" => []];
-        $sincrono = getattr($this->json, 'sincrono', false);
-        $this->inBackground = $inBackground;
-
-        $this->sync_categories();
-        if ($inBackground || $sincrono) {
-            $this->sync_users();
-            $this->sync_cohorts();
-        }
-
-        $prefix = "{$CFG->wwwroot}/course/view.php";
-        foreach ([false, true] as $isRoom) {
-            $this->isRoom = $isRoom;
-            $this->sync_log("Vou processar " . ($isRoom ? "sala de coordenação" : "diário") . ". ", 0);
-            $this->sync_course($isRoom ? $this->cursoCategory->id : $this->turmaCategory->id);
-            $result[$isRoom ? 'url_sala_coordenacao' : 'url'] = "$prefix?id={$this->course->id}";
-            if ($inBackground || $sincrono) {
-                $this->sync_enrols_cohorts();
-                $this->sync_enrols_manuals();
-                $this->sync_enrolments();
-                $this->suspend_students_not_in_list_all_enrols();
-                $this->sync_groups();
-            }
-        }
-        $result["ids_suspensos"] = array_unique($this->ids_suspensos);
-        
-
-        return $result;
-    }
-
-
     function sync_category($idnumber, $name, $parent) {
         global $DB;
         $category = $DB->get_record('course_categories', ['idnumber' => $idnumber]);
@@ -306,10 +297,10 @@ class sync_up_enrolments_service extends service {
 
         $alunos = getattr($this->json, 'alunos', []);
         foreach ($alunos as $aluno) {
-            $aluno->tipo_usuario = $aluno->tipo_usuario ?: "Aluno";
+            $aluno->tipo_usuario = "Aluno";
         }
 
-        $usuarios = array_merge($time, $alunos);
+        $usuarios = $this->inBackground ? array_merge($time, $alunos) : $time;
         foreach ($usuarios as $usuario) {
             $this->sync_user($usuario);
             $this->sync_profile_custom_fields($usuario);
@@ -462,7 +453,7 @@ class sync_up_enrolments_service extends service {
 
 
     function sync_course($categoryid) {
-        global $DB;
+        global $DB, $CFG;
 
         $course_code = $this->isRoom ? "{$this->json->campus->sigla}.{$this->json->curso->codigo}" : "{$this->json->turma->codigo}.{$this->json->componente->sigla}";
         $course_code_long = $this->isRoom ? $course_code : "{$course_code}#{$this->json->diario->id}";
@@ -564,10 +555,13 @@ class sync_up_enrolments_service extends service {
             $this->course = (object)$data;
             update_course($this->course);
         }
+        $this->context = \context_course::instance($this->course->id);
+
+        $course_url = "{$CFG->wwwroot}/course/view.php?id={$this->course->id}";
+        $course_type = $this->isRoom ? 'url_sala_coordenacao' : 'url';
+        $this->result[$course_type] = $course_url;
 
         $this->sync_log("Curso " . $this->course->shortname . " sincronizado. ", 0);
-
-        $this->context = \context_course::instance($this->course->id);
     }
 
 
@@ -598,14 +592,16 @@ class sync_up_enrolments_service extends service {
     function sync_enrols_manuals() {
         global $DB;
 
-        $alunos = getattr($this->json, 'alunos', []);
         $professores = getattr($this->json, 'professores', []);
         $equipe = getattr($this->json, 'equipe', []);
+        $staff = array_merge($professores, $equipe);
+        $alunos = getattr($this->json, 'alunos', []);
         $sala_tipo = $this->get_sala_tipo();
 
         $prefixes = [];
-        foreach (array_merge($alunos, $professores, $equipe) as $usuario) {
-            $papel_suap = getattr($usuario, "tipo", "Aluno");
+        $usuarios = $this->inBackground ? array_merge($staff, $alunos) : $staff;
+        foreach ($usuarios as $usuario) {
+            $papel_suap = getattr($usuario, "tipo_usuario", "Aluno");
             $prefix = "$sala_tipo:$papel_suap";
             $prefixes[$prefix] ??= ["sala_tipo" => $sala_tipo, "papel_suap" => $papel_suap];
         }
@@ -665,7 +661,7 @@ class sync_up_enrolments_service extends service {
 
     private function sync_log(string $message, int $code) {
         if ($this->inBackground) {
-            echo "\n" . $code . ": " . $message;
+            echo ($code != 0 ? "\nERROR {$code}: $message" : "\nINFO: $message");
             return;
         }
         if ($code != 0) {
@@ -677,24 +673,26 @@ class sync_up_enrolments_service extends service {
     function sync_enrolments(): array {
         $professores = getattr($this->json, 'professores', []);
         $equipe = getattr($this->json, 'equipe', []);
+        $staff = array_merge($professores, $equipe);
         $alunos = getattr($this->json, 'alunos', []);
-        foreach (array_merge($professores, $equipe, $alunos) as $usuario) {
+        $usuarios = $this->inBackground ? array_merge($staff, $alunos) : $staff;
+        foreach ($usuarios as $usuario) {
             $prefix = $this->get_sala_tipo() . ":" .  getattr($usuario, 'tipo', 'Aluno');
-            $m = $this->roles_mapping[$prefix];
-            if (!$m) {
+            if (array_key_exists($prefix, $this->roles_mapping) === false) {
                 $this->sync_log("Não localizei mapeamento para o prefix '{$prefix}'.", 0);
                 continue;
             }
+            $m = $this->roles_mapping[$prefix];
             $status_str = strtolower(getattr($usuario, 'situacao_diario', getattr($usuario, 'status', 'inativo')));
             $status = $status_str === 'ativo' ? \ENROL_USER_ACTIVE : \ENROL_USER_SUSPENDED;
 
             if ($this->is_user_enrolled_in_role($usuario->user, $m->enrol_instance, $m->role_instance)) {
                 $m->enrol_plugin->update_user_enrol($m->enrol_instance, $usuario->user->id, $status);
-                $this->sync_log("Enrolment do usuário {$usuario->user->username} no enroll {$m->enrol}, role {$m->role_instance->shortname}, atualizado para a situação {$status_str}.", 0);
+                $this->sync_log("Matriculamento de {$usuario->user->username} atualizado para {$m->enrol}:{$m->role_instance->shortname}:{$status_str}.", 0);
             } else {
                 try {
                     $m->enrol_plugin->enrol_user($m->enrol_instance, $usuario->user->id, $m->role_instance->id, time(), 0, $status);
-                    $this->sync_log("Enrolment do usuário {$usuario->user->username} no enroll {$m->enrol}, role {$m->role_instance->shortname}, inserido na situação {$status_str}.", 0);
+                    $this->sync_log("Matriculamento de {$usuario->user->username} criado como {$m->enrol}:{$m->role_instance->shortname}:{$status_str}.", 0);
                 } catch (\Throwable $e) {
                     $this->sync_log("Erro ao matricular usuário {$usuario->user->username}: {$e->getMessage()}", 534);
                 }
@@ -760,7 +758,7 @@ class sync_up_enrolments_service extends service {
             );
 
             $this->ids_suspensos[] = $record->userid;
-            $this->sync_log("Enrolment do usuário id {$record->userid} no enroll {$record->enrol} suspenso por não estar mais presente na lista de alunos sincronizados.", 0);
+            $this->sync_log("Matriculamento de {$usuario->user->username} suspenso para {$m->enrol}:{$m->role_instance->shortname}:{$status_str}.", 0);
         }
 
         return $this->ids_suspensos;

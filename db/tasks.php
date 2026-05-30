@@ -11,15 +11,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $tasks = [
     [
-        'classname' => 'local_suap\task\sync_up_enrolments_task',
-        'blocking' => 1,
-        'minute' => '*/1',
-        'hour' => '*',
-        'day' => '*',
-        'month' => '*',
-        'dayofweek' => '*',
-    ],
-    [
         'classname' => 'local_suap\task\generate_report_task',
         'blocking' => 0,
         'minute' => '0',

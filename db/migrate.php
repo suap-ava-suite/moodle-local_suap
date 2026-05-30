@@ -205,6 +205,11 @@ function local_suap_migrate($oldversion)
         $dbman->create_table($suap_enrolment_to_sync);
     }
 
+    $solicitacaoid_field = new xmldb_field('solicitacaoid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'processed');
+    if (!$dbman->field_exists($suap_enrolment_to_sync, $solicitacaoid_field)) {
+        $dbman->add_field($suap_enrolment_to_sync, $solicitacaoid_field);
+    }
+
     $suap_learning_path = new xmldb_table("suap_learning_path");
     $suap_learning_path->add_field("id",             XMLDB_TYPE_INTEGER, '10',       XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE,  null, null, null);
     $suap_learning_path->add_field("name",           XMLDB_TYPE_CHAR,    '255',      null,           XMLDB_NOTNULL, null,            null, null, null);

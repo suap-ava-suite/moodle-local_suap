@@ -24,7 +24,7 @@ function exception_handler($exception) {
     */
     $error_code = $exception->getCode() ?: 500;
     http_response_code($error_code);
-    die(json_encode(["error"=>["message"=>$exception->getMessage(), "code"=>$error_code, "source"=>'LS']]));
+    die(json_encode(["error"=>["message"=> (string)$exception, "code"=>$error_code, "source"=>'LS']]));
 }
 
 try {
@@ -68,11 +68,5 @@ try {
     $service = new $service_class();
     $service->call();
 } catch (\Exception $e) {   
-    /*
-        200 – 208, 226, 
-        300 – 305, 307, 308
-        400 – 417, 422 – 424, 426, 428 – 429, 431
-        500 – 508, 510 – 511
-    */
     exception_handler($e);
 }
