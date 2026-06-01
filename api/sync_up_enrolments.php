@@ -94,9 +94,10 @@ class sync_up_enrolments_service extends service {
 
         $this->sync_categories();
         $this->sync_users();
-        $this->sync_cohorts();
-
-        
+        if ($this->inBackground) {
+            $this->sync_cohorts();
+        }
+                
         foreach ([false, true] as $isRoom) {
             $this->isRoom = $isRoom;
             $this->sync_log("Vou processar " . ($this->isRoom ? "sala de coordenação" : "diário") . ". ", 0);
