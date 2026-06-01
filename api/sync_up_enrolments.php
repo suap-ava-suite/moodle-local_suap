@@ -342,7 +342,6 @@ class sync_up_enrolments_service extends service {
             }
         }
         $this->sync_log("Usuário " . $usuario->username . " sincronizado. ", 0);
-
     }
 
 

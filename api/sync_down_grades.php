@@ -68,12 +68,11 @@ class sync_down_grades_service extends service
             }
             return $result;
         } catch (Exception $ex) {
-            die("error");
             http_response_code(500);
             if ($ex->getMessage() == "Data submitted is invalid (value: Data submitted is invalid)") {
-                echo json_encode(["error" => ["message" => "Ocorreu uma inconsistência no servidor do AVA. Este erro é conhecido e a solução dele já está sendo estudado pela equipe de desenvolvimento. Favor tentar novamente em 5 minutos."]]);
+                echo json_encode(["error" => ["message" => "Ocorreu uma inconsistência no servidor do AVA. Este erro é conhecido e a solução dele já está sendo estudado pela equipe de desenvolvimento. Favor tentar novamente em 5 minutos.", "trace" => $ex->getTraceAsString()]]);
             } else {
-                echo json_encode(["error" => ["message" => $ex->getMessage()]]);
+                echo json_encode(["error" => ["message" => $ex->getMessage(), "trace" => $ex->getTraceAsString()]]);
             }
         }
     }
