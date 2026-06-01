@@ -757,7 +757,7 @@ class sync_up_enrolments_service extends service {
             );
 
             $this->ids_suspensos[] = $record->userid;
-            $this->sync_log("Matriculamento de {$usuario->user->username} suspenso para {$m->enrol}:{$m->role_instance->shortname}:{$status_str}.", 0);
+            $this->sync_log("Matriculamento de {$usuario->user->username} suspenso para {$m->enrol}:{$m->role_instance->shortname}.", 0);
         }
 
         return $this->ids_suspensos;
