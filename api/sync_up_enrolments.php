@@ -554,6 +554,7 @@ class sync_up_enrolments_service extends service {
             $this->course = create_course((object)$data);
         } elseif (!$this->isRoom) {
             $data['id'] = $this->course->id;
+            unset($data['visible']);
             $this->course = (object)$data;
             update_course($this->course);
         }
