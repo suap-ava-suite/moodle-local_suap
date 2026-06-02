@@ -102,7 +102,9 @@ class sync_up_enrolments_service extends service {
             $this->isRoom = $isRoom;
             $this->sync_log("Vou processar " . ($this->isRoom ? "sala de coordenação" : "diário") . ". ", 0);
             $this->sync_course($isRoom ? $this->cursoCategory->id : $this->turmaCategory->id);
-            $this->sync_enrols_cohorts();
+            if ($this->inBackground) {
+                $this->sync_enrols_cohorts();
+            }
             $this->sync_enrols_manuals();
             $this->sync_enrolments();
             if ($inBackground || $sincrono) {
