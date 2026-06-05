@@ -21,6 +21,7 @@ $json = json_decode($linha->json ?? "{}");
 $linha->status = $statuses[$linha->processed];
 $linha->solicitacao_url = is_object($json) ? ($json->solicitacao_url ?? null) : null;
 $linha->json = json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+$linha->log_url = new \moodle_url('/local/suap/admin/tasklogs.php', ['requestid' => $linha->id]);
 $templatecontext = ['linha' => $linha];
 echo $OUTPUT->render_from_template('local_suap/view', $templatecontext);
 echo $OUTPUT->footer();

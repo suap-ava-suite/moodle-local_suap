@@ -14,10 +14,10 @@ if (!is_siteadmin()) {
     echo $OUTPUT->footer();
     die();
 }
-  
+
 echo $OUTPUT->header();
 
-$ordenacao = isset($_GET['ordenacao']) ? $_GET['ordenacao'] : 'ASC';
+$ordenacao = isset($_GET['ordenacao']) ? $_GET['ordenacao'] : 'DESC';
 
 // Número de itens por página
 $itensPorPagina = 10;
@@ -90,24 +90,6 @@ if ($numeroTotalDePaginas < $primeirasPaginas + $ultimasPaginas) {
         $paginacaoVariada = array_unique(array_merge($primeirosCinco, $ultimosTres));
 
     }
-    
-    // if($paginaAtual >= 5){
-    //     //  $paginacaoVariadaInicio = '...'; 
-    //     //  $mergePaginaPrimeirosCincoInicio[] = array_push($primeirosCinco, $paginacaoVariadaInicio);
-    //     // foreach($mergePaginaPrimeirosCincoInicio as $t){
-    //     //     echo($t.'-');
-    //     // }
-        
-    //     //  $paginacaoInicio= array_unique(array_merge($mergePaginaPrimeirosCincoInicio, $ultimosTres));
-    //     //  $paginacaoVariada = $mergePaginaPrimeirosCincoInicio; 
-    //     $mergeUnique= array_unique(array_merge($primeirosCinco,$ultimosTres));
-        
-
-        
-    //     $paginacaoVariada = array_merge(['...'], $mergeUnique);
-    //     echo("OPA");
-    // }
-    
 
 }
 
