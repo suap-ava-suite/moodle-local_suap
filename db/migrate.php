@@ -117,6 +117,7 @@ function suap_bulk_course_custom_field() {
 
     $integrador_ava = save_course_custom_category('Integrador AVA');
     \local_suap\save_course_custom_field($integrador_ava, 'grupos_sincronizados', 'Grupos sincronizados pelo Integrador AVA');
+    \local_suap\save_course_custom_field($integrador_ava, 'url_sala_coordenacao', 'URL da sala de coordenação');
 
     $painel_ava = save_course_custom_category('Painel AVA');
     \local_suap\save_course_custom_field($painel_ava, 'sala_tipo', 'Tipo de sala');
@@ -208,6 +209,11 @@ function local_suap_migrate($oldversion)
     $solicitacaoid_field = new xmldb_field('solicitacaoid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'processed');
     if (!$dbman->field_exists($suap_enrolment_to_sync, $solicitacaoid_field)) {
         $dbman->add_field($suap_enrolment_to_sync, $solicitacaoid_field);
+    }
+
+    $taskid_field = new xmldb_field('taskid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'processed');
+    if (!$dbman->field_exists($suap_enrolment_to_sync, $taskid_field)) {
+        $dbman->add_field($suap_enrolment_to_sync, $taskid_field);
     }
 
     $suap_learning_path = new xmldb_table("suap_learning_path");
