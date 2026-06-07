@@ -151,15 +151,19 @@ class sync_up_enrolments_service extends service {
 
 
     function get_sala_tipo() {
-        return match (true) {
+        // Acessa restricoes do objeto (com check se existe)
+        $restricoes = isset($this->json->turma->restricoes) ? $this->json->turma->restricoes : null;
+        $this->result["restricoes"] = trim(strval($restricoes));
+        $this->result["sala_tipo"] = match (true) {
             $this->isRoom => 'coordenacoes',
-            getattr($this->json->curso, 'autoinscricao', false) => 'autoinscricoes',
-            getattr($this->json->curso, 'praticas', false) => 'praticas',
-            getattr($this->json->curso, 'modelos', false) => 'modelos',
+            !empty($this->result["restricoes"]) => 'autoinscricoes',
+            isset($this->json->curso->praticas) && !empty($this->json->curso->praticas) => 'praticas',
+            isset($this->json->curso->modelos) && !empty($this->json->curso->modelos) => 'modelos',
             default => 'diarios',
         };
+        
+        return $this->result["sala_tipo"];
     }
-
 
     function get_componente_tipo() {
         /* 1:Regular, 2:Seminário, 3:Prática Profissional, 4:Trabalho de Conclusão de Curso, 5:Atividade de Extensão, 6:Prática como Componente Curricular, 7:Visita Técnica / Aula da Campo, 8:Componentes Extracurriculares */        
