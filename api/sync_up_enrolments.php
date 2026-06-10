@@ -96,7 +96,9 @@ class sync_up_enrolments_service extends service {
             if ($this->inBackground || getattr($this->json, 'sincrono', false)) {
                 $this->sync_enrols_manuals();
                 $this->sync_enrolments();
-                $this->suspend_students_not_in_list_all_enrols();
+                if ($this->get_sala_tipo() == 'diarios') {
+                    $this->suspend_students_not_in_list_all_enrols();
+                }
                 $this->sync_groups();
             }
         }
