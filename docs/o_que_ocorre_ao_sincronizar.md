@@ -88,27 +88,32 @@ cadeia dividido em **10 etapas principais**:
 
 ```mermaid
 flowchart TD
-  A([Início]) --> B[1. Sincroniza categorias]
-  B --> C[2. Sincroniza usuários]
-  C --> D[3. Sincroniza coortes]
+  %%{init: {"layout": "elk"}}%%
+  
+  A([Início]) --> B
 
-  D --> E[para sala de coordenacao e sala de aula, laco sala_tipo]
-  E --> F[4. Sincroniza sala]
-  F --> G[5. Vincula coorte à sala]
+  subgraph SISTEMA["Nível de sistema"]
+    direction TD
+    B[1. Sincroniza categorias] --> C[2. Sincroniza usuários]
+    C --> D[3. Sincroniza coortes]
+  end
 
-  G --> H{processando em background}
-  H -->|não| P[proxima iteracao do laço ou fim]
-  H -->|sim| I[6. Instância o tipo de inscrição na sala]
-  I --> J[7. Inscreve usuários na sala]
-  J --> K{sala_tipo igual a ALUNOS}
-  K -->|sim| L[8. Suspende ALUNOS que não vieram na sincronização]
-  K -->|não| M[9. Sincroniza grupos]
-  L --> M
-  M --> N[10. Vincula ALUNOS aos respectivos grupos]
-  N --> P
+  D --> F
 
-  P -->|proxima iteracao| E
-  P -->|fim do laco| O([Fim da sincronização])
+  subgraph LACO["Laço: salas (coordenação e aula)"]
+    direction TD
+    F[4. Sincroniza sala] --> G[5. Vincula coorte à sala]
+    G --> H{processando em background}
+    H -->|sim| I[6. Instância o tipo de inscrição na sala]
+    I --> J[7. Inscreve usuários na sala]
+    J --> K[8. Sincroniza grupos]
+    K --> L[9. Vincula ALUNOS aos respectivos grupos]
+    L --> M{sala_tipo igual a diarios}
+    M -->|sim| N[10. Suspende ALUNOS que não vieram na sincronização]
+  end
+
+  M -->|não| O([Fim da sincronização])
+  N --> O
 ```
 
 ### Passo 1. Sincroniza categorias
