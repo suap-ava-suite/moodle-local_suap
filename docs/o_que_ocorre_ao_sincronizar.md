@@ -1,33 +1,105 @@
-# O que ocorre ao Sincronizar (Integração SUAP -> Moodle/AVA)
+# O que ocorre ao sincronizar (SUAP -> Moodle)
 
-Este guia prático foi elaborado didaticamente para **coordenadores de curso**, com o objetivo de explicar o que acontece "por trás dos bastidores" no Moodle (Ambiente Virtual de Aprendizagem - AVA) quando ocorre a sincronização de dados vindos do SUAP.
+Este guia prático foi elaborado didaticamente para os **colaboradores da educação**, que usam a **SUAP/AVA Suite", 
+com o objetivo de explicar o que acontece "por trás dos bastidores" no Moodle (Ambiente Virtual de Aprendizagem - AVA)
+quando ocorre a sincronização de dados vindos do SUAP, desconsiderando as questões técnicas próprias de Tecnologia da
+Informação e Comunicação (TIC).
 
-A integração é coordenada principalmente pelo arquivo técnico [sync_up_enrolments.php](file:///home/kelson/projetos/IFRN/suap-ava-suite/local_suap/api/sync_up_enrolments.php), que gerencia a criação, atualização e organização de salas, diários, usuários, coortes, matrículas e grupos.
+## Verbetes
 
----
+- **SUAP**: é o Software de Planejamento de Recursos Empresariais (Enterprise Resource Planning - ERP) construído pelo 
+nstituto Federal de Educação, Ciência e Tecnologia do Estado do Rio Grande do Norte (IFRN)
+- **SUAP Edu**: é o módulo do SUAP que faz as vezes de um Sistema de Gestão Acadêmica (SGA), é onde reside o registro
+acadêmico oficial (matrículas, notas oficiais, dados pessoais, vínculos). **Não é onde as aulas acontecem.** 
+TODA informação acadêmica oficial é gerida aqui
+- **Moodle:** é a plataforma do Ambiente Virtual de Aprendizagem (AVA ou LMS - Learning Management System) que hospeda
+as salas de aula virtuais do IFRN. **É onde ocorre o processo de ensino-aprendizagem.** 
+NENHUMA informação acadêmica oficial é gerada diretamente aqui; ela é apenas refletida a partir do SUAP (inscrições) e 
+só é oficial após retornar ao SUAP (notas)
+- **Integrador AVA:** é a ponte entre os dados do SUAP para o Moodle de forma automatizada, literalmente, um middleware
+entre que viabiliza esta integração
+- **Painel AVA:** é uma interface que unifica para o usuário as salas de diversos Moodle
+- **Sincronizar**: ou **sincronização** indica o processo de cadastrar, alterar ou remover categoria, sala, usuário, 
+inscrição, grupo, vinculação a grupo, etc
+- **Categoria**: equivale a uma **category** no Moodle
+- **Sala**: equivale a um **course** no Moodle, não usamos o termo curso pois na educação o termo curso tem outro 
+significado e conflitaria com o termo curso, tipos de salas:
+   - **Sala de coordenação de curso**: (chave: `coordenacoes`) para cada curso, de cada campus, sendo uma sala de 
+   coordenação para cada curso
+   - **Autoinscrição**: (chave: `autoinscricoes`) para cada turma de curso **FIC < 160h** é criada uma sala para que os
+   alunos se autoinscrevam, só docentes e coortes são sincronizado na ida para o Moodle, na volta para o SUAP os alunos
+   que concluíram mai do que X% do curso e obtiveram nota superior a X serão matriculados e marcados como concluintes
+   - **Laboratório individual de prática de docencia em EaD**: (chave: `praticas`) para cada aluno de um curso de 
+   formação em EaD é criada uma sala com esse propósito, sendo inseridos o aluno e professor com algum papel de docencia
+   - **Modelo de sala**: (chave: `modelos`) quando um docente necessita de uma sala para construir a estrutura de uma 
+   sala é criada uma sala deste tipo (*atenção a isso*):
+   - **Diário**: (chave: `diarios`) se não for de nenhum dos tipos acima, será um diário, sendo que:
+      - em **curso tradicional**, 1 **diário** no SUAP equivale a 1 sala deste tipo no Moodle
+      - em **FIC < 160h**, 1 **turma** no SUAP equivale a 1 sala deste tipo no Moodle
+- **Usuário**: equivale a um **course** no Moodle, qualquer uma das contas de alguma pessoa, normalmente em relação 
+1 para 1 com uma conta no SUAP
+- **Docente**: professsor formador, professsor conteudista, professsor principal, tutor ou mediador
+- **Inscrição**: equivale a um **enrolment** em um ou mais **role assign** no Moodle, o usuário pode ter várias 
+inscrições em uma sala, assim como vários **role assign**, especialmente quando envolve os educadores, de alunos 
+espera-se apenas 1 inscrição.
+- **Grupo**: equivale a um **group** no Moodle, sendo uma forma de agrupar usuário em um curso para realização de 
+ativades coletivas
+- **Agrupamento**: equivale a um **groupings groups** no Moodle, ou seja, um grupo de grupos, a Suite não lida com este 
+cenário
+- **Coorte**: equivale a um **cohort** no Moodle, sendo um grupo global usuários, que se difere do **grupo**, que é por 
+curso, serve para inscrever/deinscrever automaticamente o usuário nos cursos onde a **coorte** tenha sido adicionada
+- **Vinculação**: equivale a um **group member** no Moodle, indica vinculo de um usuário a um grupo no Moodle ou a uma 
+coorte
+- **Curso**: não há equivalente no Moodle, o **course** do Moodle equivale a uma **Sala**, cabendo ao escopo 
+de gestão acadêmica no SUAP, ainda que para cada **curso** seja crida uma **categoria** no Moodle
+- **Turma**: não há equivalente no Moodle, cabendo ao escopo de gestão acadêmica no SUAP, ainda que para cada 
+**turma** seja crida uma **categoria** no Moodle e que para cada **turma** POSSA ser criado um **grupo** na sala e o 
+aluno vinculado a ele
+- **Polo**: não há equivalente no Moodle, cabendo ao escopo de gestão acadêmica no SUAP, ainda que para cada 
+**polo** POSSA ser criado um **grupo** no Moodle e o aluno vinculado a ele
+- **Programa**: não há equivalente no Moodle, cabendo ao escopo de gestão acadêmica no SUAP, ainda que para cada 
+**programa** POSSA ser criado um **grupo** no Moodle e o aluno vinculado a ele
+- **Disciplina**: ou **componente curricular**, não há equivalente no Moodle, cabendo ao escopo de gestão acadêmica 
+no SUAP, não confundir com o **Diário**
+- **Média da etapa**: equivale à nota de uma **categoria de notas** no quadro de notas do Moodle, sendo mapeadas para 
+`N1` (média da etapa 1), `N2` (média da etapa 2), `N3` (média da etapa 3) ou `N4` (média da etapa 4), a depender do 
+Projeto Político Pedagógico do Curso (PPC) em sua instituição, no campo `idnumber` da categoria de notas
+- **Nota da avaliação final**: equivale à nota de uma **categoria de notas** no quadro de notas do Moodle, 
+sendo mapeadas para `NAF`, só deve ser disponibiliza nas configurações do quadro de notas para os alunos que precisaram
+ir para a atividade final de recuperação do "diário"
+Projeto Político Pedagógico do Curso (PPC) em sua instituição, no campo `idnumber` da categoria de notas
+- **Média do diário**: não há equivalente no Moodle, é calculado pelo próprio SUAP, independe da nota vir do 
+Moodle ou ser lançada manualmente pelo docente, conforme PPC
+- **Média final do diário**: não há equivalente no Moodle, é calculado pelo próprio SUAP, independe da nota vir do 
+Moodle ou ser lançada manualmente pelo docente, conforme PPC
 
-## 🌐 O Ecossistema de Integração do IFRN
+## O fluxo de sincronização no Moodle
 
-Para entender a sincronização, é importante compreender o papel de cada sistema:
-1. **SUAP (ERP / Módulo Acadêmico):** É onde reside o registro acadêmico oficial (matrículas, notas oficiais, dados pessoais, vínculos). **Não é onde as aulas acontecem.**
-2. **AVA (Moodle):** É a sala de aula virtual. É onde ocorre o processo de ensino-aprendizagem. Nenhuma informação acadêmica oficial é gerada diretamente aqui; ela é apenas refletida a partir do SUAP.
-3. **Painel AVA & Integrador:** Fazem a ponte que traduz os dados do SUAP para o Moodle de forma automatizada.
-
----
-
-## 🧭 O Fluxo de Sincronização no Moodle
-
-Quando a sincronização é acionada (geralmente por ações no SUAP ou agendamento de tarefas), o Moodle realiza um processo em cadeia dividido em **6 etapas principais**:
+Quando a sincronização é acionada (seja por ações ou agendamento de tarefas no SUAP), o Moodle realiza um processo em cadeia dividido em **10 etapas principais**:
 
 ```mermaid
-graph TD
-    A[Início da Sincronização] --> B[1. Organização das Categorias]
-    B --> C[2. Cadastro / Atualização de Usuários]
-    C --> D[3. Sincronização de Coortes]
-    D --> E[4. Criação / Atualização das Salas/Cursos]
-    E --> F[5. Vínculo de Estudantes e Professores]
-    F --> G[6. Divisão de Grupos]
-    G --> H[Fim da Sincronização]
+flowchart TD
+  A([Início]) --> B[1. Sincroniza categorias]
+  B --> C[2. Sincroniza usuários]
+  C --> D[3. Sincroniza coortes]
+
+  D --> E[para coordenação e sala, laço sala_tipo]
+  E --> F[4. Sincroniza a sala]
+  F --> G[5. Vincula a coorte à sala]
+
+  G --> H{processando em background}
+  H -->|não| P[proxima iteracao do laço ou fim]
+  H -->|sim| I[6. Instância o tipo de inscrição à sala]
+  I --> J[7. Inscreve os usuários à sala]
+  J --> K{sala_tipo igual a ALUNOS}
+  K -->|sim| L[8. Suspende os ALUNOS que não vieram na sincronização]
+  K -->|não| M[9. Sincroniza os grupos]
+  L --> M
+  M --> N[10. Vincula os ALUNOS aos respectivos grupos ]
+  N --> P
+
+  P -->|proxima iteracao| E
+  P -->|fim do laco| O([Fim da sincronização])
 ```
 
 ---
@@ -88,7 +160,12 @@ Dentro da sala virtual (curso), os estudantes são subdivididos de forma automat
   * **Grupo de Programa:** Agrupa pelo programa acadêmico (ex: *Institucional*).
 * O Moodle analisa quem já está no grupo e adiciona os novos alunos faltantes. Se um grupo não existia na sala, ele é criado na hora.
 
----
+
+### Observações
+
+- Um usuário pode estar em vários grupos na sala, mas isso tende a complicar para todos os usuários no processo de 
+ensino-aprendizagem pois o usuário tem que ficar escolhendo em qual grupo que fazer cada atividade. Não recomendamos.
+- A Suite até dá a opção de se trabalhar com multiplas vinculações em uma sala, mas desencorajamos a prática.
 
 ## ⚙️ Sincronização de Preferências Individuais
 
