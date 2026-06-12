@@ -120,7 +120,7 @@ class sync_up_enrolments_service extends service {
     private function sync_log(string $message, int $code) {
         $logMessage = ($code != 0 ? "\nERROR {$code}: $message" : "\nINFO: $message");
         $this->result['logMessages'][] = $logMessage;
-        if ($this->inBackground) {
+        if ($this->inBackground && (defined('CLI_SCRIPT') && CLI_SCRIPT)) {
             echo $logMessage;
             return;
         }
@@ -321,6 +321,12 @@ class sync_up_enrolments_service extends service {
                 foreach (getattr($coorte, 'colaboradores', []) as $colaborador) {
                     $colaborador->username = strtolower($colaborador->login);
                 }
+            }
+        }
+        if (isset($this->json->equipe)) {
+            foreach ($this->json->equipe as $membro) {
+                $membro->username = strtolower($membro->login);
+                $membro->tipo_usuario = getattr($membro, 'tipo', 'Equipe');
             }
         }
 
