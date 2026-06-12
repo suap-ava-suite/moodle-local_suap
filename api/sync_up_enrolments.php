@@ -214,9 +214,16 @@ class sync_up_enrolments_service extends service {
 
     function getIdDosAlunosFaltandoAgrupar($group, $alunos) {
         global $DB;
-        $alunoIds = array_map(function ($x) {
-            return $x->user->id;
-        }, $alunos);
+        $alunoIds = [];
+        foreach ($alunos as $aluno) {
+            $user = $this->usuarios_sincronizados[$aluno->username] ?? null;
+            if ($user) {
+                $alunoIds[] = $user->id;
+            }
+        }
+        if (empty($alunoIds)) {
+            return [];
+        }
         list($insql, $inparams) = $DB->get_in_or_equal($alunoIds);
         $sql = "SELECT userid FROM {groups_members} WHERE groupid = ? and userid $insql";
         $ja_existem = $DB->get_records_sql($sql, array_merge([$group->id], $inparams));
@@ -892,6 +899,10 @@ class sync_up_enrolments_service extends service {
             foreach ($grupos as $grupo_nome => $alunos) {
                 $this->sync_log("    Grupo '{$grupo_nome}' será sincronizado. ", 0);
                 $group = $this->sync_group($grupo_nome);
+                if (!$group) {
+                    $this->sync_log("        Grupo '{$grupo_nome}' não foi encontrado ou criado. Pulando adição de usuários.", 0);
+                    continue;
+                }
                 $idDosAlunosFaltandoAgrupar = $this->getIdDosAlunosFaltandoAgrupar($group, $alunos);
                 foreach ($alunos as $group_name => $usuario) {
                     $this->sync_log("        Usuário '{$usuario->username}' será adicionado ao grupo '{$grupo_nome}'.", 0);
