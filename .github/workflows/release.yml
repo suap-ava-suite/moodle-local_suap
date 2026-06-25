@@ -1,0 +1,105 @@
+##
+# GitHub Actions workflow: generate an installable Moodle plugin ZIP on every
+# tag push.
+#
+# Usage:
+#   git tag -a 1.0.0 -m "Release 1.0.0"
+#   git push origin 1.0.0
+#
+# The resulting imagemap.zip can be uploaded directly to
+# Site administration → Plugins → Install plugins in Moodle.
+##
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    name: Build and release plugin ZIP
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract and validate plugin version
+        id: version
+        run: |
+          VERSION=$(grep -oP '\$plugin->version\s*=\s*\K[0-9]+' version.php)
+          RELEASE=$(grep -oP "\\\$plugin->release\s*=\s*'\K[^']+" version.php)
+          COMPONENT=$(grep -oP "\\\$plugin->component\s*=\s*'\K[^']+" version.php)
+
+          VERSION_SUFFIX="${VERSION: -3}"
+          RELEASE_SUFFIX="${RELEASE##*.}"
+          TAG="${GITHUB_REF_NAME#v}"
+
+          SHORTNAME="${COMPONENT#*_}"
+
+          echo "Plugin version: $VERSION (suffix: $VERSION_SUFFIX)"
+          echo "Plugin release: $RELEASE (suffix: $RELEASE_SUFFIX)"
+          echo "Plugin component: $COMPONENT"
+          echo "Plugin shortname: $SHORTNAME"
+          echo "Tag (sem prefixo v): $TAG"
+
+          # Validação 1: Últimos 3 dígitos devem corresponder
+          if [ "$VERSION_SUFFIX" != "$RELEASE_SUFFIX" ]; then
+            echo "::error::Os 3 últimos dígitos de \$plugin->version ($VERSION_SUFFIX) não correspondem aos 2 últimos dígitos de \$plugin->release ($RELEASE_SUFFIX) em version.php"
+            exit 1
+          fi
+
+          # Validação 2: Release deve corresponder à tag
+          if [ "$RELEASE" != "$TAG" ]; then
+            echo "::error::\$plugin->release ($RELEASE) não corresponde ao nome da tag ($TAG). Atualize version.php antes de criar a tag."
+            exit 1
+          fi
+
+          # Validação 3: Garantir que o componente foi encontrado
+          if [ -z "$COMPONENT" ]; then
+            echo "::error::A variável \$plugin->component não foi encontrada no version.php."
+            exit 1
+          fi
+
+          # Exporta as variáveis para o próximo passo
+          echo "number=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "component=$COMPONENT" >> "$GITHUB_OUTPUT"
+          echo "shortname=$SHORTNAME" >> "$GITHUB_OUTPUT"
+
+      - name: Build plugin ZIP
+        id: build
+        run: |
+          # Recupera as variáveis geradas no passo anterior
+          COMPONENT="${{ steps.version.outputs.component }}"
+          SHORTNAME="${{ steps.version.outputs.shortname }}"
+          VERSION="${{ steps.version.outputs.number }}"
+          
+          # 1. Cria a pasta com o nome exato que o instalador do Moodle espera
+          mkdir -p /tmp/build/$SHORTNAME
+
+          # 2. Copia os arquivos do repositório, ignorando lixo de desenvolvimento
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='.gitignore' \
+            --exclude='tests' \
+            --exclude='vendor' \
+            . /tmp/build/$SHORTNAME/
+
+          cd /tmp/build
+          
+          # 3. Dá ao arquivo ZIP o nome padrão (ex: tool_painelava-2023101000.zip)
+          ZIPFILE="${COMPONENT}-${VERSION}.zip"
+          zip -r "$GITHUB_WORKSPACE/$ZIPFILE" $SHORTNAME/
+          
+          echo "zipfile=$ZIPFILE" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.build.outputs.zipfile }}
+          generate_release_notes: true
