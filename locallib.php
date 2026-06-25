@@ -1,4 +1,18 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * SUAP Integration
@@ -20,16 +34,14 @@ require_once("$CFG->dirroot/message/externallib.php");
 require_once("$CFG->dirroot/message/output/popup/externallib.php");
 
 
-function get_last_sort_order($tablename)
-{
+function get_last_sort_order($tablename) {
     global $DB;
     $l = $DB->get_record_sql('SELECT coalesce(max(sortorder), 0) + 1 as sortorder from {' . $tablename . '}');
     return $l->sortorder;
 }
 
 
-function get_or_create($tablename, $keys, $values)
-{
+function get_or_create($tablename, $keys, $values) {
     global $DB;
     $record = $DB->get_record($tablename, $keys);
     if (!$record) {
@@ -40,8 +52,7 @@ function get_or_create($tablename, $keys, $values)
 }
 
 
-function create_or_update($tablename, $keys, $allways, $updates = [], $insert = [])
-{
+function create_or_update($tablename, $keys, $allways, $updates = [], $insert = []) {
     global $DB;
     $record = $DB->get_record($tablename, $keys);
     if ($record) {
@@ -56,24 +67,20 @@ function create_or_update($tablename, $keys, $allways, $updates = [], $insert = 
     return $record;
 }
 
-function dienow($message, $code)
-{
+function dienow($message, $code) {
     http_response_code($code);
     die(json_encode(["message" => $message, "code" => $code]));
 }
 
-function config($name)
-{
+function config($name) {
     return get_config('local_suap', $name);
 }
 
-function aget($array, $key, $default = null)
-{
+function aget($array, $key, $default = null) {
     return \key_exists($key, $array) ? $array[$key] : $default;
 }
 
-function get_recordset_as_json($sql, $params)
-{
+function get_recordset_as_json($sql, $params) {
     global $DB;
 
     $result = "[";
@@ -85,8 +92,7 @@ function get_recordset_as_json($sql, $params)
     return $result . "]";
 }
 
-function get_recordset_as_array($sql, $params)
-{
+function get_recordset_as_array($sql, $params) {
     global $DB;
 
     $result = [];
@@ -102,49 +108,45 @@ function get_languages() {
     return implode("\n", $options);
 }
 
-function save_course_custom_field_category($name, $itemid=0, $contextid=1, $descriptionformat=0)
-{
+function save_course_custom_field_category($name, $itemid = 0, $contextid = 1, $descriptionformat = 0) {
     return get_or_create(
         'customfield_category',
         [
-            'name' => $name, 
-            'component' => 'core_course', 
-            'area' => 'course'
+            'name' => $name,
+            'component' => 'core_course',
+            'area' => 'course',
         ],
         [
-            'sortorder' => get_last_sort_order('customfield_category'), 
-            'itemid' => $itemid, 
-            'contextid' => $contextid, 
-            'descriptionformat' => $descriptionformat, 
-            'timecreated' => time(), 
-            'timemodified' => time()
+            'sortorder' => get_last_sort_order('customfield_category'),
+            'itemid' => $itemid,
+            'contextid' => $contextid,
+            'descriptionformat' => $descriptionformat,
+            'timecreated' => time(),
+            'timemodified' => time(),
         ]
     );
 }
 
-function save_course_custom_field($categoryid, $shortname, $name, $type = 'text', $configdata = '{"required":"0","uniquevalues":"0","displaysize":50,"maxlength":4000,"ispassword":"0","link":"","locked":"0","visibility":"0"}')
-{
+function save_course_custom_field($categoryid, $shortname, $name, $type = 'text', $configdata = '{"required":"0","uniquevalues":"0","displaysize":50,"maxlength":4000,"ispassword":"0","link":"","locked":"0","visibility":"0"}') {
     return \local_suap\get_or_create(
         'customfield_field',
         ['shortname' => $shortname],
         [
-            'categoryid' => $categoryid, 
-            'name' => $name, 
+            'categoryid' => $categoryid,
+            'name' => $name,
             'type' => $type,
             'configdata' => $configdata,
-            'timecreated' => time(), 
-            'timemodified' => time(), 
-            'sortorder' => \local_suap\get_last_sort_order('customfield_field')
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'sortorder' => \local_suap\get_last_sort_order('customfield_field'),
         ]
     );
 }
 
-function save_user_custom_field($categoryid, $shortname, $name, $datatype = 'text', $visible = 1, $p1 = NULL, $p2 = NULL)
-{
+function save_user_custom_field($categoryid, $shortname, $name, $datatype = 'text', $visible = 1, $p1 = null, $p2 = null) {
     return \local_suap\get_or_create(
         'user_info_field',
         ['shortname' => $shortname],
         ['categoryid' => $categoryid, 'name' => $name, 'description' => $name, 'descriptionformat' => 2, 'datatype' => $datatype, 'visible' => $visible, 'param1' => $p1, 'param2' => $p2]
     );
 }
-

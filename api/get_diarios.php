@@ -1,4 +1,18 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace local_suap;
 
@@ -23,9 +37,7 @@ define("REGEX_CODIGO_DIARIO_DISCIPLINA", 5);
 
 class get_diarios_service extends \local_suap\service
 {
-
-    function get_cursos($all_diarios)
-    {
+    function get_cursos($all_diarios) {
         global $DB;
         $result = [];
         foreach ($all_diarios as $course) {
@@ -38,8 +50,7 @@ class get_diarios_service extends \local_suap\service
         return array_values($result);
     }
 
-    function get_disciplinas($all_diarios)
-    {
+    function get_disciplinas($all_diarios) {
         global $DB;
         $result = [];
         foreach ($all_diarios as $course) {
@@ -52,8 +63,7 @@ class get_diarios_service extends \local_suap\service
         return array_values($result);
     }
 
-    function get_semestres($all_diarios)
-    {
+    function get_semestres($all_diarios) {
         global $DB;
 
         $result = [];
@@ -67,8 +77,7 @@ class get_diarios_service extends \local_suap\service
         return array_values($result);
     }
 
-    function get_all_diarios($username)
-    {
+    function get_all_diarios($username) {
         return \local_suap\get_recordset_as_array(
             "
             SELECT      c.id, 
@@ -85,8 +94,7 @@ class get_diarios_service extends \local_suap\service
         );
     }
 
-    function get_diarios($username, $semestre, $situacao, $ordenacao, $disciplina, $curso, $arquetipo, $q, $page, $page_size)
-    {
+    function get_diarios($username, $semestre, $situacao, $ordenacao, $disciplina, $curso, $arquetipo, $q, $page, $page_size) {
         global $DB, $CFG, $USER;
 
         $USER = $DB->get_record('user', ['username' => strtolower($username)]);
@@ -117,9 +125,9 @@ class get_diarios_service extends \local_suap\service
 
             if (preg_match(REGEX_CODIGO_COORDENACAO, $diario->shortname)) {
                 $coordenacoes[] = $diario;
-            } elseif (preg_match(REGEX_CODIGO_PRATICA, $diario->shortname)) {
+            } else if (preg_match(REGEX_CODIGO_PRATICA, $diario->shortname)) {
                 $praticas[] = $diario;
-            } elseif (!empty($semestre . $disciplina . $curso . $q)) {
+            } else if (!empty($semestre . $disciplina . $curso . $q)) {
                 preg_match(REGEX_CODIGO_DIARIO, $diario->shortname, $matches);
                 if (count($matches) == REGEX_CODIGO_DIARIO_ELEMENTS_COUNT) {
                     if (
@@ -149,8 +157,7 @@ class get_diarios_service extends \local_suap\service
         ];
     }
 
-    function do_call()
-    {
+    function do_call() {
         return $this->get_diarios(
             \local_suap\aget($_GET, 'username', null),
             \local_suap\aget($_GET, 'semestre', null),

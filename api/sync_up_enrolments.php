@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 namespace local_suap;
 
 // Desabilita verificação CSRF para esta API
@@ -28,7 +43,6 @@ function getattr($obj, $prop, $default = '') {
 };
 
 class sync_up_enrolments_service extends service {
-
     public $json;
     private $result = [];
     private $cursoCategory;
@@ -43,7 +57,7 @@ class sync_up_enrolments_service extends service {
     private $usuarios_sincronizados = [];
     private $alunos_sincronizados = [];
     private $ids_suspensos = [];
-    private $inBackground = False;
+    private $inBackground = false;
 
 
     function do_call() {
@@ -111,7 +125,6 @@ class sync_up_enrolments_service extends service {
             }
         }
         $this->result["ids_suspensos"] = array_unique($this->ids_suspensos);
-        
 
         return $this->result;
     }
@@ -132,7 +145,7 @@ class sync_up_enrolments_service extends service {
 
     function get_course_enrol_instance_by_enrol_type($enrol_type) {
         global $DB;
-        foreach (\enrol_get_instances($this->course->id, FALSE) as $instance) {
+        foreach (\enrol_get_instances($this->course->id, false) as $instance) {
             if ($instance->enrol === $enrol_type) {
                 return $instance;
             }
@@ -173,12 +186,12 @@ class sync_up_enrolments_service extends service {
             isset($this->json->curso->modelos) && !empty($this->json->curso->modelos) => 'modelos',
             default => 'diarios',
         };
-        
+
         return $this->result["sala_tipo"];
     }
 
     function get_componente_tipo() {
-        /* 1:Regular, 2:Seminário, 3:Prática Profissional, 4:Trabalho de Conclusão de Curso, 5:Atividade de Extensão, 6:Prática como Componente Curricular, 7:Visita Técnica / Aula da Campo, 8:Componentes Extracurriculares */        
+        /* 1:Regular, 2:Seminário, 3:Prática Profissional, 4:Trabalho de Conclusão de Curso, 5:Atividade de Extensão, 6:Prática como Componente Curricular, 7:Visita Técnica / Aula da Campo, 8:Componentes Extracurriculares */
         $tipo = getattr($this->json->componente, 'tipo', '1');
         return match (true) {
             $tipo == '1' => 'Regular',
@@ -224,7 +237,7 @@ class sync_up_enrolments_service extends service {
         if (empty($alunoIds)) {
             return [];
         }
-        list($insql, $inparams) = $DB->get_in_or_equal($alunoIds);
+        [$insql, $inparams] = $DB->get_in_or_equal($alunoIds);
         $sql = "SELECT userid FROM {groups_members} WHERE groupid = ? and userid $insql";
         $ja_existem = $DB->get_records_sql($sql, array_merge([$group->id], $inparams));
         return array_map(function ($x) {
@@ -347,7 +360,7 @@ class sync_up_enrolments_service extends service {
 
         $equipe_completa = array_values(array_reduce(
             $equipe_denormalizada,
-            function($carry, $usuario) {
+            function ($carry, $usuario) {
                 $username = $usuario->username;
                 if (!isset($carry[$username])) {
                     $carry[$username] = $usuario;
@@ -419,7 +432,7 @@ class sync_up_enrolments_service extends service {
                         "idnumber" => $coorte->idnumber,
                         "description" => $coorte->descricao,
                         "visible" => $coorte->ativo,
-                        "contextid" => 1
+                        "contextid" => 1,
                     ];
                     $cohort->id = \cohort_add_cohort($cohort);
                 } else {
@@ -431,7 +444,7 @@ class sync_up_enrolments_service extends service {
                 }
 
                 foreach ($coorte->colaboradores as $usuario) {
-                    $user = $this->usuarios_sincronizados[$usuario->username]; 
+                    $user = $this->usuarios_sincronizados[$usuario->username];
                     if (!$user) {
                         $this->sync_log("      Usuário '{$usuario->username}' não encontrado para adicionar à coorte '{$coorte->nome}'.", 533);
                         continue;
@@ -452,7 +465,7 @@ class sync_up_enrolments_service extends service {
         $nivel_ensino = getattr($modalidade, 'nivel_ensino', (object)[]);
         $turma = getattr($this->json, 'turma', (object)[]);
         $polo = getattr($usuario, 'polo', (object)[]);
-        $tipo_doc_certificado = getattr($usuario, 'cpf') == '' ?  'passaporte' : 'cpf';
+        $tipo_doc_certificado = getattr($usuario, 'cpf') == '' ? 'passaporte' : 'cpf';
 
         $custom_fields = [
             // SUAP
@@ -511,8 +524,10 @@ class sync_up_enrolments_service extends service {
         ];
 
         // Filtra apenas campos com conteúdo
-        $custom_fields = array_filter($custom_fields, function($v) {return $v !== '';});
-        
+        $custom_fields = array_filter($custom_fields, function ($v) {
+            return $v !== '';
+        });
+
         $user = $this->usuarios_sincronizados[$usuario->username];
         \profile_save_custom_fields($user->id, $custom_fields);
     }
@@ -526,7 +541,7 @@ class sync_up_enrolments_service extends service {
         $modalidade = getattr($this->json->curso, 'modalidade', (object)[]);
         $nivelensino = getattr($modalidade, 'nivel_ensino', (object)[]);
         $tipo_course = $this->isCoordination ? "SALA DE COORDENAÇÃO" : "DIÁRIO";
-    
+
         $this->sync_log("SINCRONIZANDO AO NÍVEL DO CURSO $tipo_course ($course_code_long).", 0);
 
         $data = [
@@ -574,9 +589,9 @@ class sync_up_enrolments_service extends service {
             "customfield_curso_conteudo" => json_encode(getattr($this->json->curso, 'conteudo', [])),
 
             /* Obrigatórios - Componente Curricular */
-            "customfield_disciplina_id" => $this->isCoordination ? '' : $this->json->componente->id ,
-            "customfield_disciplina_sigla" => $this->isCoordination ? '' : $this->json->componente->sigla ,
-            "customfield_disciplina_descricao" => $this->isCoordination ? '' : $this->json->componente->descricao ,
+            "customfield_disciplina_id" => $this->isCoordination ? '' : $this->json->componente->id,
+            "customfield_disciplina_sigla" => $this->isCoordination ? '' : $this->json->componente->sigla,
+            "customfield_disciplina_descricao" => $this->isCoordination ? '' : $this->json->componente->descricao,
 
             /* Opcionais - Componente Curricular */
             "customfield_disciplina_descricao_historico" => $this->isCoordination ? '' : getattr($this->json->componente, 'descricao_historico'),
@@ -594,8 +609,8 @@ class sync_up_enrolments_service extends service {
             "customfield_disciplina_ch_semanal_2s" => $this->isCoordination ? '' : getattr($this->json->componente, 'ch_semanal_2s'),
 
             /* Obrigatórios - Turma */
-            "customfield_turma_id" => $this->isCoordination ? '' : $this->json->turma->id ,
-            "customfield_turma_codigo" => $this->isCoordination ? '' : $this->json->turma->codigo ,
+            "customfield_turma_id" => $this->isCoordination ? '' : $this->json->turma->id,
+            "customfield_turma_codigo" => $this->isCoordination ? '' : $this->json->turma->codigo,
 
             /* Opcionais - Turma */
             "customfield_turma_ano_periodo" => $this->isCoordination ? '' : substr(getattr($this->json->turma, 'codigo'), 0, 4) . "." . substr(getattr($this->json->turma, 'codigo'), 4, 1),
@@ -622,7 +637,7 @@ class sync_up_enrolments_service extends service {
         $this->course = $this->get_course_and_customfields_by_idnumber($course_code_long);
         if (!$this->course) {
             $this->course = create_course((object)$data);
-        } elseif (!$this->isCoordination) {
+        } else if (!$this->isCoordination) {
             $data['id'] = $this->course->id;
             unset($data['visible']);
             $this->course = (object)$data;
@@ -686,7 +701,6 @@ class sync_up_enrolments_service extends service {
 
         $mappings = json_decode(config('roles_mapping'));
 
-        
         $this->sync_log("  Instâncias de enrols (" . count($prefixes) . ") serão sincronizadas.", 0);
         foreach ($prefixes as $prefix => $keys) {
             $sala_tipo = $keys["sala_tipo"];
@@ -813,7 +827,7 @@ class sync_up_enrolments_service extends service {
         $studentroleid = 5;
 
         $params = array_merge(
-            $params, 
+            $params,
             [
                 'contextid'   => $this->context->id,
                 'roleid'      => $studentroleid,
@@ -932,7 +946,7 @@ class sync_up_enrolments_service extends service {
         global $DB;
         $data = ['courseid' => $this->course->id, 'name' => $group_name];
         $group = $DB->get_record('groups', $data);
-        
+
         if (!$group && !in_array($group_name, $this->course->synchronized_groups)) {
             $groupid = \groups_create_group((object)$data);
             $group = $DB->get_record('groups', ['id' => $groupid]);
