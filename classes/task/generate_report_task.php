@@ -1,22 +1,36 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 namespace local_suap\task;
 
 defined('MOODLE_INTERNAL') || die();
 
 class generate_report_task extends \core\task\scheduled_task {
-    
     public function get_name() {
         return get_string('generate_report_task', 'local_suap');
     }
-    
+
     public function execute() {
         global $DB, $CFG;
-        
+
         mtrace('=== INICIANDO RELATÓRIO DE CURSOS AUTOINSTRUCIONAIS ===');
-        
+
         $now = time();
         mtrace('Data de execução: ' . date('Y-m-d H:i:s', $now));
-                
+
         $sql = "
         SELECT
             c.id,
@@ -79,7 +93,7 @@ class generate_report_task extends \core\task\scheduled_task {
                         'completed' => 0,
                         'grade_sum' => 0,
                         'grade_count' => 0,
-                    ]
+                    ],
                 ];
             }
 
@@ -90,7 +104,7 @@ class generate_report_task extends \core\task\scheduled_task {
             $avg_grade  = $this->get_average_grade($course->id);
             $with_cert  = $this->count_with_certificate($course->id);
             $eligible = max(0, min($passed, $exam_takers) - $with_cert);
-            
+
             $completed = $this->count_completed($course->id);
 
             if ($completed == 0 && ($with_cert + $eligible) > 0) {
@@ -115,13 +129,17 @@ class generate_report_task extends \core\task\scheduled_task {
             // Cálculos derivados (que não vêm direto do banco)
             // Quem nunca acessou = Inscritos - Acessaram
             $no_access_calc = ($enrolled - $accessed);
-            if ($no_access_calc < 0) $no_access_calc = 0; // Prevenção contra erros de log
+            if ($no_access_calc < 0) {
+                $no_access_calc = 0; // Prevenção contra erros de log
+            }
             $t->no_access += $no_access_calc;
 
             // Reprovados = Quem fez a atividade final - Quem passou
             // (Ou você pode definir reprovado como quem acessou e não passou, depende da regra)
             $failed_calc = ($exam_takers - $passed);
-            if ($failed_calc < 0) $failed_calc = 0;
+            if ($failed_calc < 0) {
+                $failed_calc = 0;
+            }
             $t->failed += $failed_calc;
 
             // Acumula notas para média ponderada depois
@@ -132,19 +150,18 @@ class generate_report_task extends \core\task\scheduled_task {
             }
 
             // mtrace("   Processado: ID {$course->id} | {$curso_nome} ! {$campus} | Inscritos: {$enrolled}");
-
         }
-        
+
         foreach ($grouped as $key => $data) {
-            $t = $grouped[$key]['totals']; 
-            
+            $t = $grouped[$key]['totals'];
+
             $t->avg_grade = $t->grade_count > 0
                 ? round($t->grade_sum / $t->grade_count, 2)
                 : 0;
-            
+
             unset($t->grade_sum, $t->grade_count);
         }
-        
+
         $DB->delete_records('local_suap_relatorio_cursos_autoinstrucionais');
 
         foreach ($grouped as $data) {
@@ -167,7 +184,7 @@ class generate_report_task extends \core\task\scheduled_task {
                 'without_certificate' => $data['totals']->without_certificate,
                 'completed' => $data['totals']->completed,
 
-                'timegenerated' => $now
+                'timegenerated' => $now,
             ];
 
             $DB->insert_record('local_suap_relatorio_cursos_autoinstrucionais', $record);
@@ -175,10 +192,10 @@ class generate_report_task extends \core\task\scheduled_task {
 
         mtrace('=== RELATÓRIO FINALIZADO ===');
     }
-    
+
     private function count_enrolled($courseid) {
         global $DB;
-        
+
         $sql = "SELECT COUNT(DISTINCT u.id) as total
                 FROM {user} u
                 JOIN {user_enrolments} ue ON ue.userid = u.id
@@ -192,11 +209,11 @@ class generate_report_task extends \core\task\scheduled_task {
                 AND e.status = 0 
                 AND ue.status = 0
                 AND u.deleted = 0";
-            
+
         $result = $DB->get_record_sql($sql, ['courseid' => $courseid]);
         return $result->total;
     }
-    
+
     private function count_accessed($courseid) {
         global $DB;
 
@@ -216,10 +233,10 @@ class generate_report_task extends \core\task\scheduled_task {
 
         return (int)($result->total ?? 0);
     }
-    
+
     private function count_completed($courseid) {
         global $DB;
-        
+
         $sql = "SELECT COUNT(DISTINCT cc.userid) as total
                 FROM {course_completions} cc
                 JOIN {role_assignments} ra ON ra.userid = cc.userid
@@ -232,14 +249,14 @@ class generate_report_task extends \core\task\scheduled_task {
 
         $result = $DB->get_record_sql($sql, [
             'courseid' => $courseid,
-            'courseid2' => $courseid
+            'courseid2' => $courseid,
         ]);
         return $result->total;
     }
 
     private function count_final_exam_takers($courseid) {
         global $DB;
-        
+
         // Identificar qual é a "última" atividade do curso.
         $sql_last_item = "SELECT gi.id
                         FROM {grade_items} gi
@@ -248,9 +265,9 @@ class generate_report_task extends \core\task\scheduled_task {
                         AND gi.itemmodule IN ('quiz', 'assign')
                         ORDER BY gi.sortorder DESC
                         LIMIT 1";
-        
+
         $last_item = $DB->get_record_sql($sql_last_item, ['courseid' => $courseid]);
-        
+
         // Se não houver nenhuma atividade, retorna 0 imediatamente
         if (!$last_item) {
             mtrace("    Aviso: Nenhuma atividade (quiz/assignment) encontrada no curso {$courseid}");
@@ -258,7 +275,7 @@ class generate_report_task extends \core\task\scheduled_task {
         }
 
         mtrace("    ID da última atividade: {$last_item->id}");
-        
+
         // Contar quantos alunos têm nota nessa atividade específica
         $sql_count = "SELECT COUNT(DISTINCT g.userid) as total
                     FROM {grade_grades} g
@@ -269,21 +286,21 @@ class generate_report_task extends \core\task\scheduled_task {
                     WHERE g.itemid = :itemid
                     AND g.finalgrade IS NOT NULL
                     AND ra.roleid = 5";
-        
+
         $result = $DB->get_record_sql($sql_count, [
             'courseid' => $courseid,
-            'itemid'   => $last_item->id
+            'itemid'   => $last_item->id,
         ]);
-        
+
         $count = $result ? (int)$result->total : 0;
         mtrace("    Alunos que fizeram a última atividade: {$count}");
-        
+
         return $count;
     }
 
     private function count_passed($courseid) {
         global $DB;
-        
+
         // Conta usuários que passaram (nota >= nota mínima do curso ou >= 6 se não configurada)
         $sql = "SELECT COUNT(DISTINCT gg.userid) as total
                 FROM {grade_grades} gg
@@ -301,17 +318,17 @@ class generate_report_task extends \core\task\scheduled_task {
                     ELSE gi.gradepass 
                 END
                 AND ra.roleid = 5";
-        
+
         $result = $DB->get_record_sql($sql, [
             'courseid' => $courseid,
-            'courseid2' => $courseid
+            'courseid2' => $courseid,
         ]);
         return $result ? (int)$result->total : 0;
     }
 
     private function get_average_grade($courseid) {
         global $DB;
-        
+
         $sql = "SELECT AVG(gg.finalgrade) as avg_grade
                 FROM {grade_grades} gg
                 JOIN {grade_items} gi ON gi.id = gg.itemid
@@ -323,27 +340,27 @@ class generate_report_task extends \core\task\scheduled_task {
                 AND gi.itemtype = 'course'
                 AND gg.finalgrade IS NOT NULL
                 AND ra.roleid = 5";
-        
+
         $result = $DB->get_record_sql($sql, [
             'courseid' => $courseid,
-            'courseid2' => $courseid
+            'courseid2' => $courseid,
         ]);
         return $result && $result->avg_grade ? round($result->avg_grade, 2) : 0;
     }
 
     private function count_with_certificate($courseid) {
         global $DB;
-        
+
         try {
             $dbman = $DB->get_manager();
-            
+
             // Verificar se as tabelas do plugin coursecertificate existem
             $table_issues = new \xmldb_table('tool_certificate_issues');
-            
+
             if (!$dbman->table_exists($table_issues)) {
                 return 0; // Plugin não instalado
             }
-            
+
             // Contar certificados emitidos para este curso
             // coursecertificate (atividade) -> tool_certificate_issues (emissões)
             $sql = "SELECT COUNT(DISTINCT tci.userid) as total
@@ -356,17 +373,15 @@ class generate_report_task extends \core\task\scheduled_task {
                     WHERE cc.course = :courseid2
                     AND tci.code IS NOT NULL
                     AND ra.roleid = 5";
-            
+
             $result = $DB->get_record_sql($sql, [
                 'courseid' => $courseid,
-                'courseid2' => $courseid
+                'courseid2' => $courseid,
             ]);
             return $result ? (int)$result->total : 0;
-            
         } catch (\Exception $e) {
             mtrace("Aviso: Não foi possível contar certificados - {$e->getMessage()}");
             return 0;
         }
     }
-    
 }

@@ -27,8 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/migrate.php');
 
-function xmldb_local_suap_upgrade($oldversion)
-{
+function xmldb_local_suap_upgrade($oldversion) {
     suap_bulk_course_custom_field();
     suap_bulk_user_custom_field();
 
@@ -45,13 +44,11 @@ function xmldb_local_suap_upgrade($oldversion)
     }
 
     if ($oldversion < 20260130081) {
-
         $dbman = $DB->get_manager();
 
         $table = new xmldb_table('local_suap_relatorio_cursos_autoinstrucionais');
 
         if (!$dbman->table_exists($table)) {
-
             $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
 
             $table->add_field('curso_nome', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL);
@@ -90,25 +87,23 @@ function xmldb_local_suap_upgrade($oldversion)
     }
 
     if ($oldversion < 20260206084) {
-
         $dbman = $DB->get_manager();
 
         $table = new xmldb_table('local_suap_restricoes_autoinscricao');
 
         if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
 
-            $table->add_field('id',             XMLDB_TYPE_INTEGER, '10',   null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
-
-            $table->add_field('courseid',       XMLDB_TYPE_INTEGER, '10',   null, XMLDB_NOTNULL);
-            $table->add_field('chave',          XMLDB_TYPE_CHAR,    '255',  null, XMLDB_NOTNULL);
-            $table->add_field('restricao',      XMLDB_TYPE_CHAR,    '255',  null, XMLDB_NOTNULL);
-            $table->add_field('descricao',      XMLDB_TYPE_TEXT,    null,   null);
-            $table->add_field('timecreated',    XMLDB_TYPE_INTEGER, '10',   null, XMLDB_NOTNULL);
+            $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('chave', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL);
+            $table->add_field('restricao', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL);
+            $table->add_field('descricao', XMLDB_TYPE_TEXT, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
 
             $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
 
-            $table->add_index('idx_courseid',   XMLDB_INDEX_NOTUNIQUE, ['courseid']);
-            $table->add_index('idx_chave',      XMLDB_INDEX_NOTUNIQUE, ['chave']);
+            $table->add_index('idx_courseid', XMLDB_INDEX_NOTUNIQUE, ['courseid']);
+            $table->add_index('idx_chave', XMLDB_INDEX_NOTUNIQUE, ['chave']);
 
             $dbman->create_table($table);
         }

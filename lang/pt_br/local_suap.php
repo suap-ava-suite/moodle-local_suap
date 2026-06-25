@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'SUAP Integration';
 $string['suap:adminview'] = 'Ver o admin do SUAP';
 
-# Auth token
+// Auth token
 $string['auth_token_header'] = 'Token de autenticação';
 $string['auth_token_header_desc'] = 'Qual será o token utilizado pelo SUAP para se autenticar nesta instalação do Moodle';
 $string["auth_token"] = 'SUAP auth token';
@@ -37,7 +37,7 @@ $string["auth_token_desc"] = 'Qual será o token utilizado pelo SUAP para se aut
 $string['painel_url'] = 'URL do Painel AVA';
 $string['painel_url_desc'] = '(ex: https://ava.ifrn.edu.br)';
 
-# Categories
+// Categories
 $string['top_category_header'] = 'Categoria principal';
 $string['top_category_header_desc'] = 'Configurações padrão da categoria principal';
 $string["top_category_iznumber"] = 'Número de identificação da categoria superior';
@@ -47,27 +47,27 @@ $string["top_category_name_desc"] = 'Usado apenas para criar a nova categoria pr
 $string["top_category_parent"] = 'Pai de categoria superior';
 $string["top_category_parent_desc"] = 'Usado apenas para criar a nova categoria principal';
 
-# New user and new enrolment defaults
+// New user and new enrolment defaults
 $string['user_and_enrolment_header'] = 'Novo usuário e novos padrões de inscrição';
 $string['user_and_enrolment_header_desc'] = 'Configurações padrão da categoria principal';
 
-# User preferences
+// User preferences
 $string["default_user_preferences"] = 'Preferências padrão do usuário';
 $string["default_user_preferences_desc"] = 'Todo novo usuário (aluno ou professor) terá essas preferências. Use uma linha por preferência. Como um arquivo .ini.';
 
-# Mapeamento de papéis
+// Mapeamento de papéis
 $string["roles_mapping"] = 'Mapeamento de papéis';
 $string["roles_mapping_desc"] = 'Mapeamento de papéis SUAP para papéis Moodle, campos: (tipo_sala:papel_suap:shortname_do_papel:tipo_inscrição). Tipo sala pode ser: diarios, coordenacoes, autoinscricoes, praticas, modelos ou padrão. Papel suap pode ser: Principal, Formador, Mediador, Tutor, Conteudista, Coordenador de Curso, Tutor presencial, Coordenador de Polo ou Secretário de Curso, por exemplo. Shortname do papel é o shortname do papel Moodle a ser usado na inscrição. Tipo inscrição pode ser: manual, self, guest, etc...';
 
-# Método de autenticação padrão
+// Método de autenticação padrão
 $string["default_auth"] = 'Método de autenticação padrão';
 $string["default_auth_desc"] = 'Método de autenticação padrão para novos usuários. Recomendamos que configure oAuth com SUAP, mas... as escolhas são suas. Mas por que oauth? Porque seus usuários podem usufruir do SSO e Painel AVA para SUAP.';
 
-# Mapeamento de métodos de autenticação
+// Mapeamento de métodos de autenticação
 $string["auths_mapping"] = 'Mapeamento de métodos de autenticação';
 $string["auths_mapping_desc"] = 'Mapeamento de método de autenticação para cada papel SUAP, campos: (papel_suap:auth). Papel suap pode ser: Principal, Formador, Mediador, Tutor, Conteudista, Coordenador de Curso, Tutor presencial, Coordenador de Polo ou Secretário de Curso. Auth é o shortname do método de autenticação Moodle a ser usado para usuários com esse papel suap.';
 
-# Student
+// Student
 $string["student_settings_header"] = 'Sincronização de estudantes';
 $string["student_settings_header_desc"] = 'Sincronização de estudantes';
 $string["default_student_auth"] = 'Autenticação de método padrão para novos usuários alunos';
@@ -77,7 +77,7 @@ $string["default_student_role_id_desc"] = 'Normalmente 5. Por quê? Este é o pa
 $string["default_student_enrol_type"] = 'Enrol_type padrão para uma inscrição de aluno inativa';
 $string["default_student_enrol_type_desc"] = 'Normalmente manuais. Por que? Porque os novos alunos serão matriculados no SUAP e sincronizados com o Moodle';
 
-# Teacher
+// Teacher
 $string["teacher_settings_header"] = 'Sincronização de professores';
 $string["teacher_settings_header_desc"] = 'Sincronização de professores';
 $string["default_teacher_auth"] = 'Autenticação de método padrão para novos usuários professores';
@@ -87,7 +87,7 @@ $string["default_teacher_role_id_desc"] = 'Normalmente 5. Por quê? Este é o pa
 $string["default_teacher_enrol_type"] = 'Enrol_type padrão para uma inscrição como professor';
 $string["default_teacher_enrol_type_desc"] = 'Normalmente manuais. Por que? Porque os novos alunos serão matriculados no SUAP e sincronizados com o Moodle';
 
-# Tutores
+// Tutores
 $string["assistant_settings_header"] = 'Sincronização de tutores';
 $string["assistant_settings_header_desc"] = 'Sincronização de tutores';
 $string["default_assistant_auth"] = 'Autenticação de método padrão para novos usuários tutores';
@@ -97,7 +97,7 @@ $string["default_assistant_role_id_desc"] = 'Normalmente 5. Por quê? Este é o 
 $string["default_assistant_enrol_type"] = 'Enrol_type padrão para uma inscrição como tutor';
 $string["default_assistant_enrol_type_desc"] = 'Normalmente manuais. Por que? Porque os novos alunos serão matriculados no SUAP e sincronizados com o Moodle';
 
-# Docentes nas salas de coordenação
+// Docentes nas salas de coordenação
 $string["instructor_settings_header"] = 'Sincronização de colaboradores em salas de coordenação';
 $string["instructor_settings_header_desc"] = 'Sincronização de colaboradores em salas de coordenação';
 $string["default_instructor_auth"] = 'Autenticação de método padrão para novos usuários docentes em salas de coordenação';
@@ -107,7 +107,7 @@ $string["default_instructor_role_id_desc"] = 'Normalmente 4. Por quê? Este é o
 $string["default_instructor_enrol_type"] = 'Enrol_type padrão para uma inscrição como docente em salas de coordenação';
 $string["default_instructor_enrol_type_desc"] = 'Normalmente manuais. Por que? Porque os novos docentes em salas de coordenação serão matriculados no SUAP e sincronizados com o Moodle';
 
-# Formador
+// Formador
 $string["former_settings_header"] = 'Sincronização de formadores';
 $string["former_settings_header_desc"] = 'Sincronização de formadores';
 $string["default_former_auth"] = 'Autenticação de método padrão para novos usuários formadores em salas de coordenação';
@@ -117,7 +117,7 @@ $string["default_former_role_id_desc"] = 'Normalmente 4. Por quê? Este é o pad
 $string["default_former_enrol_type"] = 'Enrol_type padrão para uma inscrição como formador em salas de coordenação';
 $string["default_former_enrol_type_desc"] = 'Normalmente manuais. Por que? Porque os novos formadores em salas de coordenação serão matriculados no SUAP e sincronizados com o Moodle';
 
-# Mediador
+// Mediador
 $string["moderator_settings_header"] = 'Sincronização de moderadores';
 $string["moderator_settings_header_desc"] = 'Sincronização de moderadores';
 $string["default_moderator_auth"] = 'Autenticação de método padrão para novos usuários moderadores em salas de coordenação';
@@ -127,18 +127,18 @@ $string["default_moderator_role_id_desc"] = 'Normalmente 4. Por quê? Este é o 
 $string["default_moderator_enrol_type"] = 'Enrol_type padrão para uma inscrição como moderador em salas de coordenação';
 $string["default_moderator_enrol_type_desc"] = 'Normalmente manuais. Por que? Porque os novos moderadores em salas de coordenação serão matriculados no SUAP e sincronizados com o Moodle';
 
-# Task
+// Task
 $string["sync_up_enrolments_task"] = 'Sync Up Enrolments Task';
 $string["sync_up_enrolments_task_desc"] = 'Sync Up Enrolments Task';
 $string["generate_report_task"] = 'Create a report of self-instructional courses.';
 
-# Notas
+// Notas
 $string["notes_to_sync_header"] = 'Sincronização de notas';
 $string["notes_to_sync_header_desc"] = 'Sincronização de notas';
 $string["notes_to_sync"] = 'Notas a sincronizar';
 $string["notes_to_sync_desc"] = 'Notas a sincronizar';
 
-# Grupos do curso
+// Grupos do curso
 $string['groups_in_course_header'] = 'Grupos no curso';
 $string['groups_in_course_header_desc'] = 'Grupos no curso';
 $string["course_group_entrada"] = 'Sincronizar grupos para entrada';
@@ -150,7 +150,7 @@ $string["course_group_polo_desc"] = 'Sincronizar grupos para polo';
 $string["course_group_programa"] = 'Sincronizar grupos para programa';
 $string["course_group_programa_desc"] = 'Sincronizar grupos para programa';
 
-# Grupos da sala de coordenação
+// Grupos da sala de coordenação
 $string['groups_in_room_header'] = 'Grupos na sala de coordenação';
 $string['groups_in_room_header_desc'] = 'Grupos na sala de coordenação';
 $string["room_group_entrada"] = 'Sincronizar grupos para entrada';

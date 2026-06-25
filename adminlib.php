@@ -1,4 +1,18 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
  * SUAP Integration
@@ -14,41 +28,33 @@
 
 class suap_admin_settingspage extends admin_settingpage
 {
-
-    public function __construct($admin_mode)
-    {
+    public function __construct($admin_mode) {
         $plugin_name = 'local_suap';
-        parent::__construct($plugin_name, get_string('pluginname', $plugin_name), 'moodle/site:config', false, NULL);
+        parent::__construct($plugin_name, get_string('pluginname', $plugin_name), 'moodle/site:config', false, null);
         $this->setup($admin_mode);
     }
 
-    function _($str, $args = null, $lazyload = false)
-    {
+    function _($str, $args = null, $lazyload = false) {
         return get_string($str, $this->name);
     }
 
-    function add_heading($name)
-    {
+    function add_heading($name) {
         $this->add(new admin_setting_heading("{$this->name}/$name", $this->_($name), $this->_("{$name}_desc")));
     }
 
-    function add_configtext($name, $default = '')
-    {
+    function add_configtext($name, $default = '') {
         $this->add(new admin_setting_configtext("{$this->name}/$name", $this->_($name), $this->_("{$name}_desc"), $default));
     }
 
-    function add_configtextarea($name, $default = '')
-    {
+    function add_configtextarea($name, $default = '') {
         $this->add(new admin_setting_configtextarea("{$this->name}/$name", $this->_($name), $this->_("{$name}_desc"), $default));
     }
 
-    function add_configcheckbox($name, $default = 0)
-    {
+    function add_configcheckbox($name, $default = 0) {
         $this->add(new admin_setting_configcheckbox("{$this->name}/$name", $this->_($name), $this->_("{$name}_desc"), $default));
     }
 
-    function setup($admin_mode)
-    {
+    function setup($admin_mode) {
         global $CFG;
         if ($admin_mode) {
             $default_enrol = is_dir(dirname(__FILE__) . '/../../enrol/suap/') ? 'suap' : 'manual';
@@ -63,7 +69,8 @@ class suap_admin_settingspage extends admin_settingpage
 
             $this->add_heading('user_and_enrolment_header');
             $this->add_configtextarea("default_user_preferences", "auth_forcepasswordchange=0\nhtmleditor=0\nemail_bounce_count=1\nemail_send_count=1\nemail_bounce_count=0\nvisual_preference=1");
-            $this->add_configtextarea("roles_mapping", 
+            $this->add_configtextarea(
+                "roles_mapping",
                 '
                     {
                         "diarios": {
@@ -130,8 +137,9 @@ class suap_admin_settingspage extends admin_settingpage
                 '
             );
             $this->add_configtext("default_auth", "oauth2");
-            $this->add_configtextarea("auths_mapping", 
-                  "Principal              : oauth2"
+            $this->add_configtextarea(
+                "auths_mapping",
+                "Principal              : oauth2"
                 . "\nFormador             : oauth2"
                 . "\nMediador             : oauth2"
                 . "\nConteudista          : oauth2"

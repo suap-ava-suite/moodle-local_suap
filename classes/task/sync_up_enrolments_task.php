@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 namespace local_suap\task;
 
 defined('MOODLE_INTERNAL') || die();
@@ -40,21 +55,21 @@ class sync_up_enrolments_task extends \core\task\adhoc_task {
             echo "\nSolicitação {$item->id} processada com sucesso em {$elapsed_time} segundos.";
         } catch (\Throwable $e) {
             $elapsed_time = round(microtime(true) - $start_time, 2);
-            
+
             $errormessage = $e->getMessage();
             if (isset($e->debuginfo)) {
                 $errormessage .= "\nDebug info: " . $e->debuginfo;
             }
-            
+
             echo "\nSolicitação {$item->id} processada com erro (\n" . $errormessage . "\n) em {$elapsed_time} segundos.";
-            
+
             $item->processed = 2; // falha
             try {
                 $DB->update_record('suap_enrolment_to_sync', $item);
             } catch (\Throwable $db_error) {
                 echo "\nErro ao atualizar status da solicitação no banco: " . $db_error->getMessage();
             }
-            
+
             throw $e; // Relança para o Moodle registrar a falha na tarefa adhoc
         }
     }
