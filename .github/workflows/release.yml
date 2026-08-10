@@ -30,7 +30,8 @@ jobs:
       - name: Extract and validate plugin version
         id: version
         run: |
-          VERSION=$(grep -oP '\$plugin->version\s*=\s*\K[0-9]+' version.php)
+          VERSION_RAW=$(grep -oP '\$plugin->version\s*=\s*\K[0-9_]+' version.php)
+          VERSION=$(echo "$VERSION_RAW" | tr -d '_')
           RELEASE=$(grep -oP "\\\$plugin->release\s*=\s*'\K[^']+" version.php)
           COMPONENT=$(grep -oP "\\\$plugin->component\s*=\s*'\K[^']+" version.php)
 
@@ -40,6 +41,7 @@ jobs:
 
           SHORTNAME="${COMPONENT#*_}"
 
+          echo "Plugin version raw: $VERSION_RAW"
           echo "Plugin version: $VERSION (suffix: $VERSION_SUFFIX)"
           echo "Plugin release: $RELEASE (suffix: $RELEASE_SUFFIX)"
           echo "Plugin component: $COMPONENT"
@@ -48,7 +50,7 @@ jobs:
 
           # Validação 1: Últimos 3 dígitos devem corresponder
           if [ "$VERSION_SUFFIX" != "$RELEASE_SUFFIX" ]; then
-            echo "::error::Os 3 últimos dígitos de \$plugin->version ($VERSION_SUFFIX) não correspondem aos 2 últimos dígitos de \$plugin->release ($RELEASE_SUFFIX) em version.php"
+            echo "::error::Os 3 últimos dígitos de \$plugin->version ($VERSION_SUFFIX) não correspondem aos 3 últimos dígitos de \$plugin->release ($RELEASE_SUFFIX) em version.php"
             exit 1
           fi
 
