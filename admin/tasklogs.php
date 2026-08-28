@@ -22,21 +22,21 @@ $requestid = required_param('requestid', PARAM_INT);
 require_login();
 if (!is_siteadmin()) {
     echo $OUTPUT->header();
-    echo "Fazes o quê aqui?";
+    echo get_string('unauthorized_access', 'local_suap');
     echo $OUTPUT->footer();
     die();
 }
 
 $PAGE->set_url(new moodle_url('/local/suap/tasklogs_by_request.php', ['requestid' => $requestid]));
 $PAGE->set_context(context_system::instance());
-$PAGE->set_title('Task logs');
-$PAGE->set_heading('Task logs');
+$PAGE->set_title(get_string('logs', 'local_suap'));
+$PAGE->set_heading(get_string('logs', 'local_suap'));
 
 echo $OUTPUT->header();
 
 $request = $DB->get_record('suap_enrolment_to_sync', ['id' => $requestid], '*', IGNORE_MISSING);
 if (!$request) {
-    echo $OUTPUT->notification('Solicitação não encontrada.', 'error');
+    echo $OUTPUT->notification(get_string('request_not_found', 'local_suap'), 'error');
     echo $OUTPUT->footer();
     exit;
 }
@@ -55,17 +55,25 @@ $logs = $DB->get_records_sql($sql, [
     'needle' => '%' . $needle . '%',
 ]);
 
-echo html_writer::tag('h2', 'Solicitação #' . (int)$request->id);
-echo html_writer::tag('p', 'Busca: ' . s($needle));
+echo html_writer::tag('h2', get_string('request_label', 'local_suap') . (int)$request->id);
+echo html_writer::tag('p', get_string('search_label', 'local_suap') . s($needle));
 
 if (!$logs) {
-    echo $OUTPUT->notification('Nenhum task log encontrado para esta solicitação.', 'warning');
+    echo $OUTPUT->notification(get_string('no_task_logs_found', 'local_suap'), 'warning');
     echo $OUTPUT->footer();
     exit;
 }
 
 $table = new html_table();
-$table->head = ['Log ID', 'Início', 'Fim', 'Resultado', 'Hostname', 'PID', 'Ação'];
+$table->head = [
+    get_string('log_id', 'local_suap'),
+    get_string('start_time', 'local_suap'),
+    get_string('end_time', 'local_suap'),
+    get_string('result', 'local_suap'),
+    get_string('hostname', 'local_suap'),
+    get_string('pid', 'local_suap'),
+    get_string('action', 'local_suap'),
+];
 $table->data = [];
 
 foreach ($logs as $log) {
@@ -73,10 +81,10 @@ foreach ($logs as $log) {
         (int)$log->id,
         userdate((int)$log->timestart),
         $log->timeend ? userdate((int)$log->timeend) : '-',
-        (int)$log->result === 0 ? 'Sucesso' : ((int)$log->result === 1 ? 'Falha' : 'Desconecido'),
+        (int)$log->result === 0 ? get_string('status_success', 'local_suap') : ((int)$log->result === 1 ? get_string('status_failed', 'local_suap') : get_string('status_unknown', 'local_suap')),
         s((string)$log->hostname),
         $log->pid ? (int)$log->pid : '-',
-        html_writer::link(new moodle_url('/admin/tasklogs.php', ['logid' => $log->id]), 'Abrir'),
+        html_writer::link(new moodle_url('/admin/tasklogs.php', ['logid' => $log->id]), get_string('open', 'local_suap')),
     ];
 }
 

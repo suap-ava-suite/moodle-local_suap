@@ -1,7 +1,7 @@
 <div class="local-suap-relatorio">
     {{#hasdata}}
         <div class="alert alert-info mb-4">
-            <i class="fa fa-clock-o"></i> Última atualização: {{lastupdated}}
+            <i class="fa fa-clock-o"></i> {{#str}} last_updated, local_suap {{/str}} {{lastupdated}}
         </div>
 
         <div class="accordion" id="accordion-cursos">
@@ -29,21 +29,21 @@
                                 <table class="table table-striped table-bordered table-sm mb-0">
                                     <thead class="thead-light">
                                         <tr>
-                                            <th>Campus</th>
-                                            <th>Total Inscritos</th>
-                                            <th>Acessaram</th>
-                                            <th>Nunca Acessaram</th>
-                                            <th>% Acesso</th>
-                                            <th>Fizeram Avaliação Final</th>
-                                            <th>% Fizeram Avaliação Final</th>
-                                            <th>Aprovados</th>
-                                            <th>Reprovados</th>
-                                            <th>% Aprovados</th>
-                                            <th>Nota Média</th>
-                                            <th>Com Certificado</th>
-                                            <th>Aptos sem Cert.</th>
-                                            <th>Concluídos</th>
-                                            <th>% Concluídos</th>
+                                            <th>{{#str}} campus, local_suap {{/str}}</th>
+                                            <th>{{#str}} total_enrolled, local_suap {{/str}}</th>
+                                            <th>{{#str}} accessed, local_suap {{/str}}</th>
+                                            <th>{{#str}} never_accessed, local_suap {{/str}}</th>
+                                            <th>{{#str}} pct_access, local_suap {{/str}}</th>
+                                            <th>{{#str}} final_exam_takers, local_suap {{/str}}</th>
+                                            <th>{{#str}} pct_final_exam_takers, local_suap {{/str}}</th>
+                                            <th>{{#str}} passed, local_suap {{/str}}</th>
+                                            <th>{{#str}} failed, local_suap {{/str}}</th>
+                                            <th>{{#str}} pct_passed, local_suap {{/str}}</th>
+                                            <th>{{#str}} avg_grade, local_suap {{/str}}</th>
+                                            <th>{{#str}} with_certificate, local_suap {{/str}}</th>
+                                            <th>{{#str}} eligible_without_certificate, local_suap {{/str}}</th>
+                                            <th>{{#str}} completed, local_suap {{/str}}</th>
+                                            <th>{{#str}} pct_completed, local_suap {{/str}}</th>
                                         </tr>
                                     </thead>
                                     <tbody>

@@ -20,12 +20,12 @@ require_once(\dirname(\dirname(\dirname(__DIR__))) . '/config.php');
 
 $PAGE->set_url(new \moodle_url('/local/suap/admin/index.php'));
 $PAGE->set_context(\context_system::instance());
-$PAGE->set_title('SUAP Sync Admin');
+$PAGE->set_title(get_string('admin_title', 'local_suap'));
 
 
 if (!is_siteadmin()) {
     echo $OUTPUT->header();
-    echo "Fazes o quê aqui?";
+    echo get_string('unauthorized_access', 'local_suap');
     echo $OUTPUT->footer();
     die();
 }
@@ -52,9 +52,13 @@ $params = [
 ];
 $registros = $DB->get_records_sql($sql, $params);
 
-$statuses = [0 => "Não processado", 1 => "Sucesso", 2 => 'Falha'];
+$statuses = [
+    0 => get_string('status_unprocessed', 'local_suap'),
+    1 => get_string('status_success', 'local_suap'),
+    2 => get_string('status_failed', 'local_suap'),
+];
 foreach ($registros as $key => $value) {
-    $value->status = $statuses[$value->processed];
+    $value->status = $statuses[$value->processed] ?? get_string('status_unknown', 'local_suap');
 }
 
 // Consulta SQL para contar o total de registros

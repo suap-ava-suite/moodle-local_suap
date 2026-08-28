@@ -20,20 +20,24 @@ require_once(\dirname(\dirname(\dirname(__DIR__))) . '/config.php');
 
 $PAGE->set_url(new \moodle_url('/local/suap/admin/view.php'));
 $PAGE->set_context(\context_system::instance());
-$PAGE->set_title('SUAP Sync Admin :: View');
+$PAGE->set_title(get_string('admin_title', 'local_suap') . ' :: ' . get_string('viewing_integration', 'local_suap'));
 
 if (!is_siteadmin()) {
     echo $OUTPUT->header();
-    echo "Fazes o quê aqui?";
+    echo get_string('unauthorized_access', 'local_suap');
     echo $OUTPUT->footer();
     die();
 }
 
 echo $OUTPUT->header();
 $linha = $DB->get_record("suap_enrolment_to_sync", ['id' => required_param('id', PARAM_INT)]);
-$statuses = [0 => "Não processado", 1 => "Sucesso", 2 => 'Falha'];
+$statuses = [
+    0 => get_string('status_unprocessed', 'local_suap'),
+    1 => get_string('status_success', 'local_suap'),
+    2 => get_string('status_failed', 'local_suap'),
+];
 $json = json_decode($linha->json ?? "{}");
-$linha->status = $statuses[$linha->processed];
+$linha->status = $statuses[$linha->processed] ?? get_string('status_unknown', 'local_suap');
 $linha->solicitacao_url = is_object($json) ? ($json->solicitacao_url ?? null) : null;
 $linha->json = json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 $linha->log_url = new \moodle_url('/local/suap/admin/tasklogs.php', ['requestid' => $linha->id]);

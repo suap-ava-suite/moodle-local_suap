@@ -23,5 +23,5 @@ if (property_exists($_SESSION['USER'], 'sesskey')) {
 } else {
     // require_once "../../login/logout.php";
     redirect("$CFG->wwwroot/auth/oauth2/login.php?errorcode=4&id=1&sesskey=$sesskey&wantsurl=$wantsurl");
-    echo "Sessão inválida. Por favor, <a href='$CFG->wwwroot'>tente novamente</a>.";
+    echo get_string('invalid_session', 'local_suap');
 }

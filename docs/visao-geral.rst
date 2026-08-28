@@ -96,7 +96,7 @@ Estrutura do repositório
    ├── examples/                        # Exemplos de payload JSON aceitos pela API
    ├── schemas/                         # JSON Schema (parcial) do payload de sync_up_enrolments
    ├── templates/                        # Mustache: listagem/detalhe de sincronizações e relatório
-   ├── lang/{en,pt_br}/local_suap.php    # Strings de idioma e descrições das configurações
+   ├── lang/{en,es,fr,nl,pt_br,zh_cn}/local_suap.php # Strings de idioma e descrições das configurações
    ├── requests.http                     # Exemplos de chamada à API (REST Client do VS Code)
    ├── docs/                             # Esta documentação (Sphinx)
    └── .github/workflows/
