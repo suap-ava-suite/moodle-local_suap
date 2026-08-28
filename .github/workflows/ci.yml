@@ -46,50 +46,50 @@ jobs:
 
       - name: PHP Lint
         if: always()
-        run: moodle-plugin-ci phplint local_suap
+        run: moodle-plugin-ci phplint
 
       - name: PHP Copy/Paste Detector
         continue-on-error: true
         if: always()
-        run: moodle-plugin-ci phpcpd local_suap
+        run: moodle-plugin-ci phpcpd
 
       - name: PHP Mess Detector
         continue-on-error: true
         if: always()
-        run: moodle-plugin-ci phpmd local_suap
+        run: moodle-plugin-ci phpmd
 
       - name: Moodle Code Checker
         if: always()
-        run: moodle-plugin-ci codechecker local_suap --max-warnings 0
+        run: moodle-plugin-ci codechecker --max-warnings 0
 
       - name: Moodle PHPDoc Checker
         if: always()
-        run: moodle-plugin-ci phpdoc local_suap --max-warnings 0
+        run: moodle-plugin-ci phpdoc --max-warnings 0
 
       - name: Validating
         if: always()
-        run: moodle-plugin-ci validate local_suap
+        run: moodle-plugin-ci validate
 
       - name: Check upgrade savepoints
         if: always()
-        run: moodle-plugin-ci savepoints local_suap
+        run: moodle-plugin-ci savepoints
 
       - name: Mustache Lint
         if: always()
-        run: moodle-plugin-ci mustache local_suap
+        run: moodle-plugin-ci mustache
 
       - name: Grunt
         continue-on-error: true
         if: always()
-        run: moodle-plugin-ci grunt local_suap --max-lint-warnings 0
+        run: moodle-plugin-ci grunt --max-lint-warnings 0
 
       - name: PHPUnit tests
         if: always()
-        run: moodle-plugin-ci phpunit local_suap --fail-on-warning
+        run: moodle-plugin-ci phpunit --fail-on-warning
 
       - name: Behat features
         if: always()
-        run: moodle-plugin-ci behat local_suap --profile chrome
+        run: moodle-plugin-ci behat --profile chrome
 
     services:
       postgres:
