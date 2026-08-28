@@ -17,7 +17,7 @@ local_suap
    :target: https://github.com/suap-ava-suite/moodle-local_suap/blob/main/.github/workflows/ci.yml
    :alt: Moodle compatibility
 
-.. image:: https://img.shields.io/badge/PHP-7.4%20%7C%208.0%20%7C%208.1-777bb4.svg
+.. image:: https://img.shields.io/badge/PHP-8.3-777bb4.svg
    :target: https://github.com/suap-ava-suite/moodle-local_suap/blob/main/.github/workflows/ci.yml
    :alt: PHP compatibility
 

@@ -26,7 +26,7 @@ Requisitos
 
 * ``$plugin->requires`` = ``2021051700`` em ``version.php`` (Moodle 3.11+).
 * A esteira de CI (``.github/workflows/ci.yml``) testa o plugin contra ``MOODLE_401_STABLE``,
-  ``MOODLE_402_STABLE`` e ``MOODLE_403_STABLE``, com PHP ``7.4``, ``8.0`` e ``8.1``, em PostgreSQL e MariaDB.
+  ``MOODLE_402_STABLE`` e ``MOODLE_403_STABLE``, com PHP ``8.3``, em PostgreSQL e MariaDB.
 
 .. note::
    O requisito declarado em ``version.php`` (Moodle 3.11+) é mais permissivo do que as versões efetivamente
