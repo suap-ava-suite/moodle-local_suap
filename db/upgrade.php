@@ -108,7 +108,7 @@ function xmldb_local_suap_upgrade($oldversion) {
             $dbman->create_table($table);
         }
 
-        upgrade_plugin_savepoint(true, 20260325090, 'local', 'suap');
+        upgrade_plugin_savepoint(true, 20260206084, 'local', 'suap');
     }
 
     return local_suap_migrate($oldversion);
