@@ -1,0 +1,11 @@
+# Pre-commit configuration for auth_suap
+# See https://pre-commit.com for more information
+repos:
+  - repo: local
+    hooks:
+      - id: act-test
+        name: Validar testes com act
+        entry: act -j test --matrix php:8.3 --matrix database:pgsql
+        language: system
+        pass_filenames: false
+        always_run: true

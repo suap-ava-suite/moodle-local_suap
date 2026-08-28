@@ -46,15 +46,20 @@ Documentação
 ------------
 
 Esta documentação usa `Sphinx <https://www.sphinx-doc.org/>`_ com o tema
-`moodle-docs-theme <https://pypi.org/project/moodle-docs-theme/>`_ e arquivos ``.rst`` em ``docs/``. Para gerar
-localmente:
+`moodle-docs-theme <https://pypi.org/project/moodle-docs-theme/>`_ e arquivos ``.rst`` em ``docs/pt-br/`` e ``docs/en/``. Para gerar localmente a versão em Português:
 
 .. code-block:: bash
 
    pip install sphinx moodle-docs-theme
-   sphinx-build -W -b html docs docs/_build/html
+   sphinx-build -W -b html docs/pt-br docs/_build/html/pt-br
 
-O workflow ``docs.yml`` roda o mesmo comando em CI e publica o resultado via ``actions/deploy-pages``.
+Para gerar localmente a versão em Inglês:
+
+.. code-block:: bash
+
+   sphinx-build -W -b html docs/en docs/_build/html/en
+
+O workflow ``docs.yml`` roda esses mesmos comandos em CI e publica o resultado via ``actions/deploy-pages``.
 
 Empacotamento manual
 -----------------------
@@ -93,6 +98,4 @@ O ``README.md`` deste repositório define os seguintes prefixos de commit:
      - Build ou dependências.
 
 .. note::
-   Diferentemente de outros plugins da suíte (ex. ``auth_suap``), este repositório **não** possui um
-   ``.pre-commit-config.yaml`` nem hooks em ``.githooks/`` no momento em que esta documentação foi escrita — não
-   há um passo de verificação automática obrigatória antes do commit configurado no repositório.
+   O repositório possui o ``.pre-commit-config.yaml`` e ``.githooks/pre-commit`` configurados para execução dos testes automatizados e verificações antes do commit.

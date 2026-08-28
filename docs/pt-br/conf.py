@@ -28,7 +28,7 @@ html_theme_options = {
     "github_url": "https://github.com/suap-ava-suite/moodle-local_suap",
     "github_repo": "suap-ava-suite/moodle-local_suap",
     "github_version": "main",
-    "doc_path": "docs/",
+    "doc_path": "docs/pt-br/",
     "show_edit_on_github": True,
     "enable_dark_mode": True,
     "navigation_links": (
