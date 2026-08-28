@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         php: ['8.3']
-        moodle-branch: ['MOODLE_401_STABLE', 'MOODLE_402_STABLE', 'MOODLE_403_STABLE']
+        moodle-branch: ['MOODLE_404_STABLE', 'MOODLE_405_STABLE']
         database: [pgsql, mariadb]
 
     steps:
