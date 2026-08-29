@@ -35,6 +35,6 @@ html_theme_options = {
         "Início|index, Visão geral|visao-geral, Instalação|instalacao, "
         "API e serviços|api, Sincronização SUAP → Moodle|sincronizacao, "
         "Administração|administracao, Perguntas frequentes|faq, "
-        "Desenvolvimento|desenvolvimento"
+        "Desenvolvimento|desenvolvimento, 🌐 English (EN)|../en/index.html"
     ),
 }

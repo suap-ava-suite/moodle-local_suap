@@ -27,6 +27,12 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/migrate.php');
 
+/**
+ * Upgrade the local_suap plugin.
+ *
+ * @param int $oldversion The version of the plugin being upgraded from.
+ * @return bool Always true.
+ */
 function xmldb_local_suap_upgrade($oldversion) {
     suap_bulk_course_custom_field();
     suap_bulk_user_custom_field();
@@ -109,6 +115,10 @@ function xmldb_local_suap_upgrade($oldversion) {
         }
 
         upgrade_plugin_savepoint(true, 20260206084, 'local', 'suap');
+    }
+
+    if ($oldversion < 20260829114) {
+        upgrade_plugin_savepoint(true, 20260829114, 'local', 'suap');
     }
 
     return local_suap_migrate($oldversion);

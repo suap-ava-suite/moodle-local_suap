@@ -31,15 +31,23 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: mbstring, xml, zip, gd, curl, intl, soap
           coverage: none
+          tools: client
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
 
       - name: Initialise moodle-plugin-ci
         run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client default-mysql-client default-jre-headless
           composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
           echo $(cd ci && pwd)/vendor/bin >> $GITHUB_PATH
           echo $(cd ci && pwd)/bin >> $GITHUB_PATH
           php -d max_input_vars=10000 $(cd ci && pwd)/bin/moodle-plugin-ci install \
             --plugin ./plugin \
-            --db-host=127.0.0.1
+            --db-host=127.0.0.1 \
+            --node-version 22.11.0
         env:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}

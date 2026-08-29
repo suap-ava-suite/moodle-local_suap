@@ -1,3 +1,62 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_suap/report
+
+    Template for rendering SUAP courses report.
+
+    Context variables required for this template:
+    * hasdata - boolean
+    * lastupdated - string
+    * nodatamessage - string
+    * cursos - array of courses
+
+    Example context (json):
+    {
+        "hasdata": true,
+        "lastupdated": "29/08/2026 16:00",
+        "nodatamessage": "Nenhum dado encontrado.",
+        "cursos": [
+            {
+                "curso_id": "1",
+                "curso_nome": "Curso Exemplo",
+                "campus_list": [
+                    {
+                        "campus_nome": "CNAT",
+                        "total_enrolled": 10,
+                        "accessed": 8,
+                        "no_access": 2,
+                        "pct_accessed": 80,
+                        "final_exam_takers": 5,
+                        "pct_exam_takers": 50,
+                        "passed": 4,
+                        "failed": 1,
+                        "pct_passed": 80,
+                        "avg_grade": 8.5,
+                        "with_certificate": 4,
+                        "without_certificate": 0,
+                        "completed": 4,
+                        "pct_completed": 40
+                    }
+                ]
+            }
+        ]
+    }
+}}
 <div class="local-suap-relatorio">
     {{#hasdata}}
         <div class="alert alert-info mb-4">
@@ -82,33 +141,3 @@
         </div>
     {{/hasdata}}
 </div>
-
-<style>
-/* Ícone do accordion */
-.local-suap-relatorio .accordion-icon {
-    transition: transform 0.3s ease;
-    font-size: 0.9rem;
-    color: #666;
-}
-
-/* Quando o accordion está aberto (botão sem classe collapsed) */
-.local-suap-relatorio .card-header button:not(.collapsed) .accordion-icon {
-    transform: rotate(180deg);
-}
-
-/* Primeira coluna */
-.local-suap-relatorio .table th:nth-child(1),
-.local-suap-relatorio .table td:nth-child(1) {
-    position: sticky;
-    left: 0;
-    z-index: 10;
-    background-color: #fff;
-    font-weight: 600;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-}
-
-.local-suap-relatorio .table th:nth-child(1) {
-    background-color: #f8f9fa;
-    z-index: 11;
-}
-</style>

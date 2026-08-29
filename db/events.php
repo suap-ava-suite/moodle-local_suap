@@ -14,7 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace local_suap\event;
+/**
+ * Event observers definition for local_suap plugin.
+ *
+ * @package   local_suap
+ * @copyright 2026 IFRN
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
 
 $observers = [
     [

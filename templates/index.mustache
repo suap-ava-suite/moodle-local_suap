@@ -1,3 +1,40 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_suap/index
+
+    Template for rendering integrations list.
+
+    Context variables required for this template:
+    * linhas - array of integration records
+    * paginas - array of page numbers
+
+    Example context (json):
+    {
+        "linhas": [
+            {
+                "id": 1,
+                "timecreated": 1700000000,
+                "status": "Sucesso"
+            }
+        ],
+        "paginas": [1, 2]
+    }
+}}
 <h1>{{#str}} view_integrations, local_suap {{/str}}</h1>
 <div class="d-flex flex-row-reverse">
     <input class="form-control col-md-2 mb-2" type="text" id="searchInput" placeholder="{{#str}} search_placeholder, local_suap {{/str}}">
@@ -6,13 +43,13 @@
     <thead>
     <tr>
         <th>
-            <a href="index.php?pagina=1&ordenacao=asc">ID</a>
+            <a href="index.php?pagina=1&amp;ordenacao=asc">ID</a>
         </th>
         <th>
-            <a href="index.php?pagina=1&ordenacao=asc">{{#str}} timecreated, local_suap {{/str}}</a>
+            <a href="index.php?pagina=1&amp;ordenacao=asc">{{#str}} timecreated, local_suap {{/str}}</a>
         </th>
         <th>
-            <a href="index.php?pagina=1&ordenacao=asc">{{#str}} status, local_suap {{/str}}</a>
+            <a href="index.php?pagina=1&amp;ordenacao=asc">{{#str}} status, local_suap {{/str}}</a>
         </th>
     </tr>
 
@@ -33,8 +70,8 @@
     </tbody>
 </table>
 
-<nav aria-label="Page" class="pagination pagination-centered justify-content-center" id="">
-    <ul class="mt-1 pagination flex-wrap" id="">
+<nav aria-label="Page" class="pagination pagination-centered justify-content-center">
+    <ul class="mt-1 pagination flex-wrap">
             <li class="page-item" data-page-number="1">
                 <a href="index.php?pagina=1" class="page-link" aria-current="page">
                     <span aria-hidden="true">1</span>
@@ -49,6 +86,7 @@
                 </a>
             </li>
         {{/paginas}}
+    </ul>
 </nav>
 
      <script>

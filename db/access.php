@@ -18,6 +18,7 @@
  * Newblock block caps.
  *
  * @package   local_suap
+ * @copyright 2026 IFRN
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
