@@ -1,4 +1,4 @@
-# Pre-commit configuration for auth_suap
+# Pre-commit configuration for local_suap
 # See https://pre-commit.com for more information
 repos:
   - repo: local

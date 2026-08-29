@@ -1,0 +1,4 @@
+#!/bin/sh
+# Pre-commit hook for local_suap: force act execution before commit
+echo "Executando testes locais com act antes do commit..."
+act -j test --matrix php:8.3 --matrix database:pgsql --reuse
