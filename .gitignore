@@ -2,3 +2,6 @@
 
 # Sphinx documentation (docs/).
 docs/_build/
+
+# JetBrains IDE
+.idea/
