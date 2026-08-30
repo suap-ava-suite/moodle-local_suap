@@ -27,8 +27,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_suap';
-$plugin->release = '4.5.115';
-$plugin->version = 20260829115;
+$plugin->release = '4.5.116';
+$plugin->version = 20260829116;
 $plugin->maturity = MATURITY_STABLE;
 
 $plugin->requires = 2021051700;
