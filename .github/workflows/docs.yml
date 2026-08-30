@@ -43,7 +43,7 @@ jobs:
           echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=pt-br/"><title>moodle-local_suap Documentation</title></head><body><p>Redirecting to <a href="pt-br/">Português (pt-BR)</a> or <a href="en/">English (en)</a>...</p></body></html>' > docs/_build/html/index.html
 
       - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs/_build/html
 
