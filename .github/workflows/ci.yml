@@ -34,7 +34,7 @@ jobs:
           tools: client
 
       - name: Setup Node 22
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
