@@ -206,6 +206,9 @@ processado em background, também os alunos):
 * **Criação de novos usuários**: se um aluno acabou de se matricular ou um professor foi contratado, a conta é
   criada no Moodle, com senha aleatória e método de autenticação resolvido por ``auths_mapping``/``default_auth``.
   As preferências de ``default_user_preferences`` são aplicadas apenas nesta criação.
+* **E-mail de fallback**: o e-mail é buscado, nesta ordem, em ``email_preferencial``, ``email``, ``email_secundario``,
+  ``email_google_classroom`` e ``email_academico`` (valores vazios são ignorados). Se o SUAP não informar nenhum,
+  o usuário novo é criado com ``<username>@sem-email.invalid`` e, para usuário existente, o e-mail atual é preservado.
 * **Atualização de dados**: alteração de e-mail, nome ou método de autenticação no SUAP é refletida no perfil do
   Moodle a cada sincronização.
 * **Metadados do perfil**: informações como polo de apoio presencial, programa, modalidade do curso e campus são
