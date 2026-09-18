@@ -402,6 +402,9 @@ class sync_up_enrolments_service extends service {
     /**
      * Resolve o e-mail do usuário; a API do SUAP devolve "" (não null) quando não há e-mail.
      * Sem e-mail algum, retorna ''.
+     *
+     * @param object $usuario Dados do usuário vindos do SUAP.
+     * @return string
      */
     function resolve_email($usuario): string {
         foreach (['email_preferencial', 'email', 'email_secundario', 'email_google_classroom', 'email_academico'] as $prop) {
