@@ -43,6 +43,8 @@ function getattr($obj, $prop, $default = '') {
 };
 
 class sync_up_enrolments_service extends service {
+    /** Domínio do e-mail de fallback (mesmo do auth_suap) para usuários sem e-mail no SUAP. */
+    const PLACEHOLDER_EMAIL_DOMAIN = 'sem-email.invalid';
     public $json;
     private $result = [];
     private $cursoCategory;
@@ -397,6 +399,23 @@ class sync_up_enrolments_service extends service {
     }
 
 
+    /**
+     * Resolve o e-mail do usuário; a API do SUAP devolve "" (não null) quando não há e-mail.
+     * Sem e-mail algum, retorna ''.
+     *
+     * @param object $usuario Dados do usuário vindos do SUAP.
+     * @return string
+     */
+    function resolve_email($usuario): string {
+        foreach (['email_preferencial', 'email', 'email_secundario', 'email_google_classroom', 'email_academico'] as $prop) {
+            $value = getattr($usuario, $prop);
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
+            }
+        }
+        return '';
+    }
+
     function sync_user($usuario) {
         global $DB;
         if (in_array($usuario->username, array_keys($this->usuarios_sincronizados))) {
@@ -419,13 +438,18 @@ class sync_up_enrolments_service extends service {
             'firstname' => implode(' ', array_slice($nome_parts, 0, -1)),
             'lastname' => end($nome_parts),
             'auth' => isset($this->auths_mapping[$tipo]) ? $this->auths_mapping[$tipo] : config('default_auth'),
-            'email' => getattr($usuario, 'email') ?: getattr($usuario, 'email_secundario'),
         ];
+        $email = $this->resolve_email($usuario);
 
         $user = $DB->get_record("user", ["username" => $usuario->username]);
         if ($user) {
+            // Sem e-mail no SUAP, preserva o já cadastrado em vez de apagá-lo.
+            if ($email !== '') {
+                $insert_or_update['email'] = $email;
+            }
             \user_update_user(array_merge(['id' => $user->id], $insert_or_update));
         } else {
+            $insert_or_update['email'] = $email !== '' ? $email : $usuario->username . '@' . self::PLACEHOLDER_EMAIL_DOMAIN;
             \user_create_user(array_merge($insert_or_update, $insert_only));
             $user = $DB->get_record("user", ["username" => $usuario->username]);
             foreach ($this->default_user_preferences as $parts) {

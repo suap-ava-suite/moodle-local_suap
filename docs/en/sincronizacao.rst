@@ -79,6 +79,7 @@ Guarantees category hierarchy: Root (Diários) → Campus → Course → Term �
 2. User Sync
 ~~~~~~~~~~~~
 Creates missing accounts (with authentication method resolved by ``auths_mapping``/``default_auth``) and updates profile fields (email, name, hub, program).
+The email is taken from the first non-empty of ``email_preferencial``, ``email``, ``email_secundario``, ``email_google_classroom`` and ``email_academico``. If SUAP sends none, new users get ``<username>@sem-email.invalid`` and existing users keep their current email.
 
 3. Cohort Sync
 ~~~~~~~~~~~~~~
