@@ -97,10 +97,10 @@ O ``README.md`` deste repositório define os seguintes prefixos de commit:
    * - ``build:``
      - Build ou dependências.
 
-Como contribuir: pre-commit com ``act``
----------------------------------------
+Como contribuir: pre-commit (pre-push) com ``act``
+--------------------------------------------------
 
-O hook de *pre-commit* (``.pre-commit-config.yaml``) executa localmente o mesmo workflow de CI do GitHub
+O hook do *pre-commit* (``.pre-commit-config.yaml``, estágio **pre-push**) executa localmente o mesmo workflow de CI do GitHub
 (``.github/workflows/ci.yml``, job ``ci``) usando o `act <https://nektosact.com/>`_, dentro do Docker. Por isso **não é
 necessário ter PHP (nem Moodle) instalado**: basta ter Python, pre-commit, Docker e ``act``.
 
@@ -115,7 +115,7 @@ Preparação (uma única vez):
 .. code-block:: bash
 
    pip install pre-commit
-   pre-commit install
+   pre-commit install --hook-type pre-push
 
 Na primeira execução o ``act`` pergunta qual imagem Docker usar e falha em terminais não interativos. Para evitar isso,
 crie o arquivo de configuração do ``act`` (Linux/macOS: ``~/.config/act/actrc``; Windows:
@@ -125,15 +125,15 @@ crie o arquivo de configuração do ``act`` (Linux/macOS: ``~/.config/act/actrc`
 
    -P ubuntu-latest=catthehacker/ubuntu:act-latest
 
-A cada ``git commit`` o hook executa:
+A cada ``git push`` o hook executa (não roda no ``git commit``, por ser demorado):
 
 .. code-block:: bash
 
    act -j ci --matrix php:8.3 --matrix database:pgsql --matrix moodle-branch:MOODLE_405_STABLE --reuse
 
-Para rodar o hook manualmente, sem commitar: ``pre-commit run --all-files``.
+Para rodar o hook manualmente, sem fazer push: ``pre-commit run --all-files --hook-stage pre-push``.
 
 .. note::
    O CI completo no GitHub usa uma matriz maior (Moodle 4.4 e 4.5, ``pgsql`` e ``mariadb``); o hook valida apenas uma
    combinação para manter o tempo razoável. A primeira execução baixa imagens Docker e instala o Moodle, e por isso
-   demora bem mais. As etapas marcadas como não bloqueantes no workflow (ex.: Moodle Code Checker) não reprovam o commit.
+   demora bem mais. As etapas marcadas como não bloqueantes no workflow (ex.: Moodle Code Checker) não reprovam o push.

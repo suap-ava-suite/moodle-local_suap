@@ -1,8 +1,9 @@
-# Pre-commit configuration for local_suap
+# Pre-commit/pre-push configuration for local_suap
 # See https://pre-commit.com for more information
 #
 # O hook executa o mesmo workflow de CI do GitHub (.github/workflows/ci.yml) localmente via `act`,
-# dentro do Docker. Não é necessário ter PHP instalado: apenas Python, pre-commit, Docker e act.
+# dentro do Docker, antes do `git push`
+# (é lento demais para rodar a cada commit). Não é necessário ter PHP instalado: apenas Python, pre-commit, Docker e act.
 repos:
   - repo: local
     hooks:
@@ -12,3 +13,4 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+        stages: [pre-push]

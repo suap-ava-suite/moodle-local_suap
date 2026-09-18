@@ -70,10 +70,10 @@ Supported commit message prefixes:
    * - ``build:``
      - Dependencies or build tools.
 
-How to contribute: pre-commit with ``act``
--------------------------------------------
+How to contribute: pre-commit (pre-push) with ``act``
+-----------------------------------------------------
 
-The *pre-commit* hook (``.pre-commit-config.yaml``) runs the same CI workflow used on GitHub
+The *pre-commit* hook (``.pre-commit-config.yaml``, **pre-push** stage) runs the same CI workflow used on GitHub
 (``.github/workflows/ci.yml``, job ``ci``) locally through `act <https://nektosact.com/>`_, inside Docker. You therefore
 **do not need PHP (or Moodle) installed**: only Python, pre-commit, Docker and ``act``.
 
@@ -88,7 +88,7 @@ One-time setup:
 .. code-block:: bash
 
    pip install pre-commit
-   pre-commit install
+   pre-commit install --hook-type pre-push
 
 On its first run ``act`` asks which Docker image to use and fails in non-interactive terminals. To avoid that, create
 the ``act`` config file (Linux/macOS: ``~/.config/act/actrc``; Windows: ``%LOCALAPPDATA%ctctrc``) with the
@@ -98,15 +98,15 @@ equivalent of the "Medium" image:
 
    -P ubuntu-latest=catthehacker/ubuntu:act-latest
 
-On every ``git commit`` the hook runs:
+On every ``git push`` the hook runs (it does not run on ``git commit``, since it is slow):
 
 .. code-block:: bash
 
    act -j ci --matrix php:8.3 --matrix database:pgsql --matrix moodle-branch:MOODLE_405_STABLE --reuse
 
-To run the hook manually, without committing: ``pre-commit run --all-files``.
+To run the hook manually, without pushing: ``pre-commit run --all-files --hook-stage pre-push``.
 
 .. note::
    The full CI on GitHub uses a larger matrix (Moodle 4.4 and 4.5, ``pgsql`` and ``mariadb``); the hook validates a
    single combination to keep the run time reasonable. The first run downloads Docker images and installs Moodle, so it
-   takes much longer. Steps marked as non-blocking in the workflow (e.g. Moodle Code Checker) do not fail the commit.
+   takes much longer. Steps marked as non-blocking in the workflow (e.g. Moodle Code Checker) do not fail the push.
