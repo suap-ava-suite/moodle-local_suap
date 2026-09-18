@@ -57,6 +57,7 @@ class sync_up_enrolments_service extends service {
     private $usuarios_sincronizados = [];
     private $alunos_sincronizados = [];
     private $ids_suspensos = [];
+    private $falhas_matricula = [];
     private $inBackground = false;
 
 
@@ -126,6 +127,13 @@ class sync_up_enrolments_service extends service {
         }
         $this->result["ids_suspensos"] = array_unique($this->ids_suspensos);
 
+        if (!empty($this->falhas_matricula)) {
+            throw new \Exception(
+                "Sincronização concluída com " . count($this->falhas_matricula) . " falha(s) de matrícula/papel: "
+                    . implode('; ', $this->falhas_matricula)
+            );
+        }
+
         return $this->result;
     }
 
@@ -145,13 +153,16 @@ class sync_up_enrolments_service extends service {
 
     function get_course_enrol_instance_by_enrol_type($enrol_type) {
         global $DB;
-        foreach (\enrol_get_instances($this->course->id, false) as $instance) {
+        foreach (\enrol_get_instances($this->course->id, true) as $instance) {
             if ($instance->enrol === $enrol_type) {
                 return $instance;
             }
         }
+        if (!$enrol_plugin = \enrol_get_plugin($enrol_type)) {
+            return null;
+        }
         $instance_id = $enrol_plugin->add_instance($this->course);
-        return $DB->get_record('enrol', ['id' => $instanceid]);
+        return $DB->get_record('enrol', ['id' => $instance_id]);
     }
 
 
@@ -165,13 +176,20 @@ class sync_up_enrolments_service extends service {
                                 JOIN {context}              ctx ON (e.courseid  = ctx.instanceid AND ctx.contextlevel   = 50)
                                     JOIN {role_assignments} ra  ON (ctx.id      = ra.contextid   AND ue.userid          = ra.userid)
             WHERE       ue.userid         = :userid
+              AND       ue.enrolid        = :enrolid
               AND       e.courseid        = :courseid
               AND       ra.roleid         = :roleid
               AND       ue.status         = 0
               AND       e.status          = 0
         ";
 
-        return (int) $DB->get_field_sql($sql, ['userid' => $user->id, 'courseid' => $enrol_instance->courseid, 'roleid' => $role->id]) > 0;
+        $params = [
+            'userid' => $user->id,
+            'enrolid' => $enrol_instance->id,
+            'courseid' => $enrol_instance->courseid,
+            'roleid' => $role->id,
+        ];
+        return (int) $DB->get_field_sql($sql, $params) > 0;
     }
 
 
@@ -386,7 +404,7 @@ class sync_up_enrolments_service extends service {
         }
         $this->sync_log("    Usuário " . $usuario->username . " será sincronizado. ", 0);
         $nome_parts = explode(' ', getattr($usuario, 'nome', getattr($usuario, 'nome_completo')));
-        $tipo = getattr($usuario, 'tipo', 'Aluno');
+        $tipo = getattr($usuario, 'tipo_usuario', getattr($usuario, 'tipo', 'Aluno'));
 
         $insert_only = [
             'username' => $usuario->username,
@@ -763,6 +781,8 @@ class sync_up_enrolments_service extends service {
 
 
     function sync_enrolments(): array {
+        global $DB;
+
         $professores = getattr($this->json, 'professores', []);
         $equipe = getattr($this->json, 'equipe', []);
         $alunos = getattr($this->json, 'alunos', []);
@@ -775,9 +795,12 @@ class sync_up_enrolments_service extends service {
                 $this->sync_log("    Usuário '{$usuario->username}' não encontrado para matricular.", 533);
                 continue;
             }
-            $prefix = $this->get_sala_tipo() . ":" .  getattr($usuario, 'tipo', 'Aluno');
-            if (array_key_exists($prefix, $this->roles_mapping) === false) {
-                $this->sync_log("    Não localizei mapeamento para o prefixo '{$prefix}'.", 0);
+            // Mesma chave usada em sync_enrols_manuals (tipo_usuario), senão o aluno é ignorado silenciosamente.
+            $prefix = $this->get_sala_tipo() . ":" . getattr($usuario, 'tipo_usuario', 'Aluno');
+            if (!is_array($this->roles_mapping) || array_key_exists($prefix, $this->roles_mapping) === false) {
+                $this->falhas_matricula[] = "{$user->username}: sem mapeamento para '{$prefix}'";
+                $this->alunos_sincronizados[] = $user->id; // evita suspensão por omissão
+                $this->sync_log("    Não localizei mapeamento para o prefixo '{$prefix}' (usuário '{$user->username}').", 535);
                 continue;
             }
             $m = $this->roles_mapping[$prefix];
@@ -788,11 +811,26 @@ class sync_up_enrolments_service extends service {
                 $m->enrol_plugin->update_user_enrol($m->enrol_instance, $user->id, $status);
                 $this->sync_log("    Matriculamento de '{$user->username}' será sincronizado ({$m->enrol}:{$m->role_instance->shortname}:{$status_str}).", 0);
             } else {
+                // enrol_user do core não é atômico (ue → evento → role_assign): sem transação, uma falha no meio
+                // deixa a inscrição sem papel. Com rollback, a próxima sincronização refaz tudo.
+                $transaction = $DB->start_delegated_transaction();
                 try {
                     $m->enrol_plugin->enrol_user($m->enrol_instance, $user->id, $m->role_instance->id, time(), 0, $status);
+                    if (!\user_has_role_assignment($user->id, $m->role_instance->id, $this->context->id)) {
+                        \role_assign($m->role_instance->id, $user->id, $this->context->id);
+                    }
+                    $transaction->allow_commit();
                     $this->sync_log("    Matriculamento de '{$user->username}' criado como {$m->enrol}:{$m->role_instance->shortname}:{$status_str}.", 0);
                 } catch (\Throwable $e) {
+                    try {
+                        $transaction->rollback($e);
+                    } catch (\Throwable $rollbackexception) {
+                        // rollback() relança a exceção original; o tratamento segue abaixo.
+                    }
+                    $this->falhas_matricula[] = "{$user->username}: {$e->getMessage()}";
+                    $this->alunos_sincronizados[] = $user->id; // evita suspensão por falha transitória
                     $this->sync_log("    Erro ao matricular usuário '{$user->username}': {$e->getMessage()}", 534);
+                    continue;
                 }
             }
             $this->alunos_sincronizados[] = $user->id;
@@ -856,7 +894,7 @@ class sync_up_enrolments_service extends service {
             );
 
             $this->ids_suspensos[] = $record->userid;
-            $this->sync_log("Matriculamento de '{$record->userid}' suspenso para ({$m->enrol}:{$m->role_instance->shortname}).", 0);
+            $this->sync_log("Matriculamento de '{$record->userid}' suspenso ({$record->enrol}).", 0);
         }
 
         return $this->ids_suspensos;
