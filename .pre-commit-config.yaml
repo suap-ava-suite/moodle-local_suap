@@ -1,11 +1,14 @@
 # Pre-commit configuration for local_suap
 # See https://pre-commit.com for more information
+#
+# O hook executa o mesmo workflow de CI do GitHub (.github/workflows/ci.yml) localmente via `act`,
+# dentro do Docker. Não é necessário ter PHP instalado: apenas Python, pre-commit, Docker e act.
 repos:
   - repo: local
     hooks:
-      - id: act-test
-        name: Validar testes com act
-        entry: act -j test --matrix php:8.3 --matrix database:pgsql
+      - id: act-ci
+        name: Validar CI com act
+        entry: act -j ci --matrix php:8.3 --matrix database:pgsql --matrix moodle-branch:MOODLE_405_STABLE --reuse
         language: system
         pass_filenames: false
         always_run: true
