@@ -184,7 +184,12 @@ function suap_bulk_user_custom_field() {
     \local_suap\save_user_custom_field($turma, 'turma_id', 'ID da última turma');
     \local_suap\save_user_custom_field($turma, 'turma_codigo', 'Código última da turma');
 
-    $DB->execute("INSERT INTO {user_preferences} (userid, name, value) SELECT id, 'visual_preference', 1 FROM {user} ON CONFLICT DO NOTHING");
+    $DB->execute(
+        "INSERT INTO {user_preferences} (userid, name, value)
+              SELECT u.id, 'visual_preference', '1'
+                FROM {user} u
+               WHERE NOT EXISTS (SELECT 1 FROM {user_preferences} p WHERE p.userid = u.id AND p.name = 'visual_preference')"
+    );
 }
 
 
