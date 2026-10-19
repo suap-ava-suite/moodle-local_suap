@@ -32,6 +32,7 @@ jobs:
           extensions: mbstring, xml, zip, gd, curl, intl, soap
           coverage: none
           tools: client
+          ini-values: max_input_vars=10000
 
       - name: Setup Node 22
         uses: actions/setup-node@v7
@@ -91,6 +92,11 @@ jobs:
         continue-on-error: true
         if: always()
         run: moodle-plugin-ci grunt --max-lint-warnings 0
+
+      - name: Generate locale required by Moodle PHPUnit
+        run: |
+          sudo apt-get install -y locales
+          sudo locale-gen en_AU.UTF-8
 
       - name: PHPUnit tests
         if: always()

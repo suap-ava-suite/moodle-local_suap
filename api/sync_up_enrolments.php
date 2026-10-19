@@ -69,11 +69,12 @@ class sync_up_enrolments_service extends service {
         $jsonstring = file_get_contents('php://input');
 
         $this->validate_json($jsonstring);
-        $result = $this->process(false);
         $id = $DB->insert_record(
             "suap_enrolment_to_sync",
             (object)['json' => $jsonstring, 'timecreated' => time(), 'processed' => 0]
         );
+        \local_suap\audit\context::set('api:suap', "suap_enrolment_to_sync:$id");
+        $result = $this->process(false);
 
         $task = new \local_suap\task\sync_up_enrolments_task();
         $task->set_custom_data(['id' => $id]);
@@ -447,13 +448,13 @@ class sync_up_enrolments_service extends service {
             if ($email !== '') {
                 $insert_or_update['email'] = $email;
             }
-            \user_update_user(array_merge(['id' => $user->id], $insert_or_update));
+            \local_suap\audit\writer::update_user((object) array_merge(['id' => $user->id], $insert_or_update));
         } else {
             $insert_or_update['email'] = $email !== '' ? $email : $usuario->username . '@' . self::PLACEHOLDER_EMAIL_DOMAIN;
-            \user_create_user(array_merge($insert_or_update, $insert_only));
+            \local_suap\audit\writer::create_user((object) array_merge($insert_or_update, $insert_only));
             $user = $DB->get_record("user", ["username" => $usuario->username]);
             foreach ($this->default_user_preferences as $parts) {
-                \set_user_preference($parts[0], $parts[1], $user);
+                \local_suap\audit\writer::set_preference($parts[0], $parts[1], $user);
             }
         }
         $this->usuarios_sincronizados[$usuario->username] = $user;
@@ -571,7 +572,7 @@ class sync_up_enrolments_service extends service {
         });
 
         $user = $this->usuarios_sincronizados[$usuario->username];
-        \profile_save_custom_fields($user->id, $custom_fields);
+        \local_suap\audit\writer::save_profile_fields((int) $user->id, $custom_fields);
     }
 
 

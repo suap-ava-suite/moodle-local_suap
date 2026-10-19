@@ -121,5 +121,32 @@ function xmldb_local_suap_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 20260829114, 'local', 'suap');
     }
 
+    if ($oldversion < 20261019120) {
+        $dbman = $DB->get_manager();
+        $table = new xmldb_table('local_suap_user_audit');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('targetuserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('action', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL);
+            $table->add_field('field', XMLDB_TYPE_CHAR, '100');
+            $table->add_field('oldvalue', XMLDB_TYPE_CHAR, '1000');
+            $table->add_field('newvalue', XMLDB_TYPE_CHAR, '1000');
+            $table->add_field('actoruserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('actorlabel', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL);
+            $table->add_field('origin', XMLDB_TYPE_CHAR, '10', null, XMLDB_NOTNULL);
+            $table->add_field('ip', XMLDB_TYPE_CHAR, '45');
+            $table->add_field('requestref', XMLDB_TYPE_CHAR, '100');
+            $table->add_field('eventname', XMLDB_TYPE_CHAR, '255');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_index('idx_target_time', XMLDB_INDEX_NOTUNIQUE, ['targetuserid', 'timecreated']);
+            $table->add_index('idx_actor', XMLDB_INDEX_NOTUNIQUE, ['actoruserid']);
+            $table->add_index('idx_actorlabel', XMLDB_INDEX_NOTUNIQUE, ['actorlabel']);
+            $table->add_index('idx_timecreated', XMLDB_INDEX_NOTUNIQUE, ['timecreated']);
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 20261019120, 'local', 'suap');
+    }
+
     return local_suap_migrate($oldversion);
 }

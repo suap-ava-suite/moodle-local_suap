@@ -49,3 +49,15 @@ Health Check Mechanisms
    * - ``/local/suap/health.php``
      - None
      - Legacy diagnostic script displaying server details.
+
+User change audit
+-----------------
+
+``local_suap_observer`` listens to ``user_enrolment_*``, ``user_created``, ``user_updated``, ``user_deleted``,
+``cohort_member_*`` and ``role_*`` events and writes to ``local_suap_user_audit``: who (``actoruserid`` /
+``actorlabel``: ``web``, ``api:suap``, ``api:sga``, ``api:painelava``, ``login:suap``, ``task:<name>``, ``cli``),
+when, what (field, old and new value), where from (origin, IP) and the originating request (``requestref``).
+Writes made by the plugins go through ``\local_suap\audit\writer`` which records a per-field diff, including
+profile fields and preferences. Sensitive fields are masked. View it under *Site administration → Reports → User
+change audit* (capability ``local/suap:viewuseraudit``). Retention is set by ``user_audit_retention_months``
+(default 24) and enforced by the ``purge_user_audit_task`` scheduled task.
