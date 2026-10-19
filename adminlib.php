@@ -62,6 +62,9 @@ class suap_admin_settingspage extends admin_settingpage
             $this->add_configtext("auth_token", 'changeme');
             $this->add_configtext("painel_url", 'https://ava.ifrn.edu.br');
 
+            $this->add_heading('user_audit_header');
+            $this->add_configtext("user_audit_retention_months", '24');
+
             $this->add_heading('top_category_header');
             $this->add_configtext("top_category_idnumber", 'diarios');
             $this->add_configtext("top_category_name", 'Diários');

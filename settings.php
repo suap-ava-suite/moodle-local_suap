@@ -32,4 +32,10 @@ require_once(__DIR__ . '/adminlib.php');
 
 if ($hassiteconfig) {
     $ADMIN->add('server', new suap_admin_settingspage($ADMIN->fulltree));
+    $ADMIN->add('reports', new admin_externalpage(
+        'local_suap_useraudit',
+        get_string('useraudit', 'local_suap'),
+        new moodle_url('/local/suap/admin/useraudit.php'),
+        'local/suap:viewuseraudit'
+    ));
 }

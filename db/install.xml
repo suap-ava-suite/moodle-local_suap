@@ -71,5 +71,32 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_suap_user_audit" COMMENT="Trilha de auditoria de alterações em usuários">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"   NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10"   NOTNULL="true"/>
+        <FIELD NAME="targetuserid"  TYPE="int"  LENGTH="10"   NOTNULL="true"/>
+        <FIELD NAME="action"        TYPE="char" LENGTH="30"   NOTNULL="true"/>
+        <FIELD NAME="field"         TYPE="char" LENGTH="100"/>
+        <FIELD NAME="oldvalue"      TYPE="char" LENGTH="1000"/>
+        <FIELD NAME="newvalue"      TYPE="char" LENGTH="1000"/>
+        <FIELD NAME="actoruserid"   TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="actorlabel"    TYPE="char" LENGTH="100"  NOTNULL="true"/>
+        <FIELD NAME="origin"        TYPE="char" LENGTH="10"   NOTNULL="true"/>
+        <FIELD NAME="ip"            TYPE="char" LENGTH="45"/>
+        <FIELD NAME="requestref"    TYPE="char" LENGTH="100"/>
+        <FIELD NAME="eventname"     TYPE="char" LENGTH="255"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_target_time" UNIQUE="false" FIELDS="targetuserid, timecreated"/>
+        <INDEX NAME="idx_actor"       UNIQUE="false" FIELDS="actoruserid"/>
+        <INDEX NAME="idx_actorlabel"  UNIQUE="false" FIELDS="actorlabel"/>
+        <INDEX NAME="idx_timecreated" UNIQUE="false" FIELDS="timecreated"/>
+      </INDEXES>
+    </TABLE>
+
   </TABLES>
 </XMLDB>

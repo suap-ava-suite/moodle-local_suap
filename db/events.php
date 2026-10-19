@@ -49,4 +49,20 @@ $observers = [
         'eventname'   => '\core\event\user_updated',
         'callback'    => 'local_suap_observer::user_updated',
     ],
+    [
+        'eventname'   => '\core\event\cohort_member_added',
+        'callback'    => 'local_suap_observer::cohort_member_added',
+    ],
+    [
+        'eventname'   => '\core\event\cohort_member_removed',
+        'callback'    => 'local_suap_observer::cohort_member_removed',
+    ],
+    [
+        'eventname'   => '\core\event\role_assigned',
+        'callback'    => 'local_suap_observer::role_assigned',
+    ],
+    [
+        'eventname'   => '\core\event\role_unassigned',
+        'callback'    => 'local_suap_observer::role_unassigned',
+    ],
 ];

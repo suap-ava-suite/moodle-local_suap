@@ -43,6 +43,7 @@ class sync_up_enrolments_task extends \core\task\adhoc_task {
             return;
         }
 
+        \local_suap\audit\context::set('task:sync_up_enrolments', "suap_enrolment_to_sync:{$item->id}");
         $start_time = microtime(true);
         echo "\n\nVou processar a solicitação {$item->id}.\n";
         try {

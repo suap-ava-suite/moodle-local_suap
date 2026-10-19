@@ -48,6 +48,7 @@ class service {
 
     function call() {
         $this->authenticate();
+        \local_suap\audit\context::set('api:suap');
         echo json_encode($this->do_call());
     }
 

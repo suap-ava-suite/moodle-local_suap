@@ -93,15 +93,28 @@ Três mecanismos distintos existem no repositório, com propósitos diferentes:
        ``wwwroot``, classe de sessão e configuração de proxy/SSL. Veja o aviso em :doc:`instalacao` — não possui
        ``require_login()`` nem qualquer outro controle de acesso no código-fonte atual.
 
-Eventos observados
------------------------
+Eventos observados e auditoria de usuários
+------------------------------------------
 
 ``classes/observer.php`` (``local_suap_observer``) está registrado em ``db/events.php`` para os eventos
-``\core\event\user_enrolment_created``, ``user_enrolment_deleted``, ``user_enrolment_updated``, ``user_created``,
-``user_deleted`` e ``user_updated``.
+``\core\event\user_enrolment_*``, ``user_created``, ``user_updated``, ``user_deleted``, ``cohort_member_added``,
+``cohort_member_removed``, ``role_assigned`` e ``role_unassigned``. Cada evento gera uma linha na tabela
+``local_suap_user_audit`` (trilha de auditoria): **quem** (``actoruserid`` e ``actorlabel``), **quando**
+(``timecreated``), **o quê** (``targetuserid``, ``action``, ``field``, ``oldvalue``, ``newvalue``), **de onde**
+(``origin``, ``ip``) e a requisição de origem (``requestref``, ex.: ``suap_enrolment_to_sync:123``).
 
-.. note::
-   No código-fonte atual, todos os métodos desse *observer* estão vazios (ou com a lógica antiga comentada, como
-   em ``user_created()``, que já chegou a aplicar ``default_user_preferences`` neste ponto). Os observadores estão
-   registrados, mas não produzem nenhum efeito colateral hoje — a aplicação de ``default_user_preferences``
-   acontece apenas em ``sync_user()`` (dentro de ``sync_up_enrolments``), não por estes eventos.
+Como o ator é identificado:
+
+* Moodle web: ``actoruserid`` é o usuário logado e ``actorlabel`` é ``web``.
+* APIs com token (SUAP, SGA, Painel AVA): não há usuário Moodle (``actoruserid`` 0); ``actorlabel`` identifica o
+  sistema (``api:suap``, ``api:sga``, ``api:painelava``) e ``requestref`` aponta para a solicitação gravada.
+* Login SUAP: ``login:suap``. Tarefas agendadas/adhoc: ``task:<nome>``. Linha de comando: ``cli``.
+
+As escritas feitas pelos plugins passam por ``\local_suap\audit\writer``, que compara o estado antes e depois e
+grava um registro por campo alterado (inclusive ``profile_field_*`` e preferências, que o Moodle não registra).
+Campos sensíveis (senha, CPF, RG, nome da mãe, JSON de ``last_login``) são gravados mascarados (``***``).
+
+Consulta: *Administração do site → Relatórios → Auditoria de alterações de usuários*
+(``/local/suap/admin/useraudit.php``, capacidade ``local/suap:viewuseraudit``, concedida ao papel gerente).
+Retenção: configuração ``user_audit_retention_months`` (padrão 24 meses), aplicada pela tarefa agendada
+``purge_user_audit_task``. A tabela é coberta pelo provedor de privacidade do plugin (exportação e exclusão).
