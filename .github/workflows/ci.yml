@@ -93,6 +93,11 @@ jobs:
         if: always()
         run: moodle-plugin-ci grunt --max-lint-warnings 0
 
+      - name: Generate locale required by Moodle PHPUnit
+        run: |
+          sudo apt-get install -y locales
+          sudo locale-gen en_AU.UTF-8
+
       - name: PHPUnit tests
         if: always()
         run: moodle-plugin-ci phpunit --fail-on-warning
